@@ -33,7 +33,7 @@ name: release-version
 
 platform:
   os: linux
-  arch: amd64
+  arch: arm64
 
 trigger:
   event:
@@ -42,20 +42,23 @@ trigger:
 steps:
   - name: generate-chart
     pull: default
-    image: alpine/helm:3.3.0
+    image: alpine:3.12
     commands:
-      - apk add --no-cache curl
+      - apk add --no-cache curl helm
       - helm dependency update
       - helm package ./
       - mkdir gitea
       - mv gitea*.tgz gitea/
       - curl -o gitea/index.yaml https://dl.gitea.io/charts/index.yaml
       - helm repo index gitea/ --url https://dl.gitea.io/charts --merge gitea/index.yaml
+
   - name: upload-chart
     pull: default
     image: plugins/s3:latest
     settings:
       bucket: releases
+      endpoint: https://storage.gitea.io
+      path_style: true
       access_key:
         from_secret: aws_access_key_id
       secret_key:
