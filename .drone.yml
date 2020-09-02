@@ -44,12 +44,13 @@ steps:
     pull: default
     image: alpine:3.12
     commands:
-      - apk add --no-cache curl helm
+      - wget -q https://get.helm.sh/helm-v3.3.1-linux-arm64.tar.gz -O - | tar -xzO linux-arm64/helm > /usr/local/bin/helm
+      - chmod +x /usr/local/bin/helm
       - helm dependency update
       - helm package ./
       - mkdir gitea
       - mv gitea*.tgz gitea/
-      - curl -o gitea/index.yaml https://dl.gitea.io/charts/index.yaml
+      - wget -O gitea/index.yaml https://dl.gitea.io/charts/index.yaml
       - helm repo index gitea/ --url https://dl.gitea.io/charts --merge gitea/index.yaml
 
   - name: upload-chart
