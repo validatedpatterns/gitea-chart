@@ -189,7 +189,7 @@ Like the admin user the ldap settings can be updated but also disabled or delete
 | Parameter           | Description                       | Default                      |
 |---------------------|-----------------------------------|------------------------------|
 |image.repository| Image to start for this pod | gitea/gitea |
-|image.version| Image Version | 1.12.2 |
+|image.version| Image Version | 1.12.4 |
 |image.pullPolicy| Image pull policy | Always |
 
 ### Persistence
