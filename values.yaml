@@ -68,7 +68,6 @@ persistence:
   size: 10Gi
   accessModes:
     - ReadWriteOnce
-  storageClass: standard
 
 gitea:
   admin:
