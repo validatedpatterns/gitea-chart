@@ -267,6 +267,7 @@ camelCase:
       bindDn: CN=ldap read,OU=Spezial,DC=example,DC=com
       bindPassword: JustAnotherBindPw
       usernameAttribute: CN
+      sshPublicKeyAttribute: sshPublicKey
 ```
 
 kebab-case:
@@ -344,6 +345,8 @@ Annotations can be added to the Gitea pod.
 |persistence.size| Size for persistence to store repo information | 10Gi |
 |persistence.accessModes|AccessMode for persistence||
 |persistence.storageClass|Storage class for repository persistence||
+|persistence.labels|Labels for the persistence volume claim to be created|{}|
+|persistence.annotations|Annotations for the persistence volume claim to be created|{}|
 
 ### Ingress
 
