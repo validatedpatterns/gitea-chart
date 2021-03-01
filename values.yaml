@@ -114,6 +114,7 @@ gitea:
     enabled: false
     serviceMonitor:
       enabled: false
+      # prometheusSelector: default
 
   ldap:
     enabled: false
