@@ -57,7 +57,7 @@ steps:
     pull: always
     image: plugins/s3:latest
     settings:
-      bucket: releases
+      bucket: gitea-artifacts
       endpoint: https://storage.gitea.io
       path_style: true
       access_key:
