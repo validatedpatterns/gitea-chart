@@ -581,7 +581,7 @@ gitea:
 | `extraVolumeMounts`                         | Additional volume mounts for the Gitea containers                    | `{}`    |
 | `initPreScript`                             | Bash script copied verbatim to start of init container               |         |
 | `podSecurityContext.fsGroup`                | Set the shared file system group for all containers                  | 1000    |
-| `containerSecurityContext`                  | Run init and gitea containers as a specific securityContext          | `{}`    |
+| `containerSecurityContext`                  | Run init and Gitea containers as a specific securityContext          | `{}`    |
 | `schedulerName`                             | Use an alternate scheduler, e.g. "stork"                             |         |
 
 ### Image
@@ -602,6 +602,7 @@ gitea:
 | `persistence.size`          | Size for persistence to store repo information             | `10Gi`  |
 | `persistence.accessModes`   | AccessMode for persistence                                 |         |
 | `persistence.storageClass`  | Storage class for repository persistence                   |         |
+| `persistence.subPath`       | Subdirectory of the volume to mount at                     |         |
 | `persistence.labels`        | Labels for the persistence volume claim to be created      | `{}`    |
 | `persistence.annotations`   | Annotations for the persistence volume claim to be created | `{}`    |
 
