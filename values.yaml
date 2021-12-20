@@ -181,18 +181,19 @@ gitea:
     #  usernameAttribute:
     #  publicSSHKeyAttribute:
 
-  oauth:
-    enabled: false
-    #name:
-    #provider:
-    #key:
-    #secret:
-    #autoDiscoverUrl:
-    #useCustomUrls:
-    #customAuthUrl:
-    #customTokenUrl:
-    #customProfileUrl:
-    #customEmailUrl:
+  # Either specify inline `key` and `secret` or refer to them via `existingSecret`
+  oauth: []
+    # - name: 'OAuth 1'
+    #   provider:
+    #   key:
+    #   secret:
+    #   existingSecret:
+    #   autoDiscoverUrl:
+    #   useCustomUrls:
+    #   customAuthUrl:
+    #   customTokenUrl:
+    #   customProfileUrl:
+    #   customEmailUrl:
 
   config: {}
   #  APP_NAME: "Gitea: Git with a cup of tea"

@@ -20,7 +20,9 @@ spec:
         {{- range $idx, $value := .Values.gitea.ldap }}
         checksum/ldap_{{ $idx }}: {{ include "gitea.ldap_settings" (list $idx $value) | sha256sum }}
         {{- end }}
-        checksum/oauth: {{ include "gitea.oauth_settings" . | sha256sum }}
+        {{- range $idx, $value := .Values.gitea.oauth }}
+        checksum/oauth_{{ $idx }}: {{ include "gitea.oauth_settings" (list $idx $value) | sha256sum }}
+        {{- end }}
         {{- with .Values.gitea.podAnnotations }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -137,6 +139,22 @@ spec:
               value: {{ $value.bindDn | quote }}
             - name: GITEA_LDAP_PASSWORD_{{ $idx }}
               value: {{ $value.bindPassword | quote }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
+            {{- if .Values.gitea.oauth }}
+            {{- range $idx, $value := .Values.gitea.oauth }}
+            {{- if $value.existingSecret }}
+            - name: GITEA_OAUTH_KEY_{{ $idx }}
+              valueFrom:
+                secretKeyRef:
+                  key:  key
+                  name: {{ $value.existingSecret }}
+            - name: GITEA_OAUTH_SECRET_{{ $idx }}
+              valueFrom:
+                secretKeyRef:
+                  key:  secret
+                  name: {{ $value.existingSecret }}
             {{- end }}
             {{- end }}
             {{- end }}
