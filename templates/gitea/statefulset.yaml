@@ -97,6 +97,12 @@ spec:
               {{- if .Values.persistence.subPath }}
               subPath: {{ .Values.persistence.subPath }}
               {{- end }}
+            - name: inline-config-sources
+              mountPath: /env-to-ini-mounts/inlines/
+            {{- range $idx, $value := .Values.gitea.additionalConfigSources }}
+            - name: additional-config-sources-{{ $idx }}
+              mountPath: "/env-to-ini-mounts/additionals/{{ $idx }}/"
+            {{- end }}
             {{- if .Values.extraVolumeMounts }}
             {{- toYaml .Values.extraVolumeMounts | nindent 12 }}
             {{- end }}
@@ -283,6 +289,13 @@ spec:
             defaultMode: 110
         {{- if .Values.extraVolumes }}
         {{- toYaml .Values.extraVolumes | nindent 8 }}
+        {{- end }}
+        - name: inline-config-sources
+          secret:
+            secretName: {{ include "gitea.fullname" . }}-inline-config
+        {{- range $idx, $value := .Values.gitea.additionalConfigSources }}
+        - name: additional-config-sources-{{ $idx }}
+          {{- toYaml $value | nindent 10 }}
         {{- end }}
         - name: temp
           emptyDir: {}
