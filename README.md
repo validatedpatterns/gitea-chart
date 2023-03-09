@@ -815,9 +815,12 @@ gitea:
 
 ### Advanced
 
-| Name               | Description                                          | Value  |
-| ------------------ | ---------------------------------------------------- | ------ |
-| `checkDeprecation` | Set it to false to skip this basic validation check. | `true` |
+| Name               | Description                                                        | Value     |
+| ------------------ | ------------------------------------------------------------------ | --------- |
+| `checkDeprecation` | Set it to false to skip this basic validation check.               | `true`    |
+| `test.enabled`     | Set it to false to disable test-connection Pod.                    | `true`    |
+| `test.image.name`  | Image name for the wget container used in the test-connection Pod. | `busybox` |
+| `test.image.tag`   | Image tag for the wget container used in the test-connection Pod.  | `latest`  |
 
 ## Contributing
 
