@@ -1,4 +1,46 @@
-# Gitea Helm Chart
+# Gitea Helm Chart <!-- omit from toc -->
+
+- [Introduction](#introduction)
+- [Update and versioning policy](#update-and-versioning-policy)
+- [Dependencies](#dependencies)
+- [Installing](#installing)
+- [Prerequisites](#prerequisites)
+- [Configuration](#configuration)
+  - [Default Configuration](#default-configuration)
+  - [Additional _app.ini_ settings](#additional-appini-settings)
+  - [External Database](#external-database)
+  - [Ports and external url](#ports-and-external-url)
+  - [ClusterIP](#clusterip)
+  - [SSH and Ingress](#ssh-and-ingress)
+  - [SSH on crio based kubernetes cluster](#ssh-on-crio-based-kubernetes-cluster)
+  - [Cache](#cache)
+  - [Persistence](#persistence)
+  - [Admin User](#admin-user)
+  - [LDAP Settings](#ldap-settings)
+  - [OAuth2 Settings](#oauth2-settings)
+- [Configure commit signing](#configure-commit-signing)
+- [Metrics and profiling](#metrics-and-profiling)
+- [Pod annotations](#pod-annotations)
+- [Parameters](#parameters)
+  - [Global](#global)
+  - [Image](#image)
+  - [Security](#security)
+  - [Service](#service)
+  - [Ingress](#ingress)
+  - [StatefulSet](#statefulset)
+  - [ServiceAccount](#serviceaccount)
+  - [Persistence](#persistence-1)
+  - [Init](#init)
+  - [Signing](#signing)
+  - [Gitea](#gitea)
+  - [LivenessProbe](#livenessprobe)
+  - [ReadinessProbe](#readinessprobe)
+  - [StartupProbe](#startupprobe)
+  - [Memcached](#memcached)
+  - [PostgreSQL](#postgresql)
+  - [Advanced](#advanced)
+- [Contributing](#contributing)
+- [Upgrading](#upgrading)
 
 [Gitea](https://gitea.io/en-us/) is a community managed lightweight code hosting solution written in Go.
 It is published under the MIT license.
@@ -51,9 +93,7 @@ When upgrading, please refer to the [Upgrading](#upgrading) section at the botto
 - Helm 3.0+
 - PV provisioner for persistent data support
 
-## Examples
-
-### Gitea Configuration
+## Configuration
 
 Gitea offers lots of configuration options.
 This is fully described in the [Gitea Cheat Sheet](https://docs.gitea.io/en-us/config-cheat-sheet/).
@@ -538,7 +578,7 @@ signing:
 To use the gpg key, Gitea needs to be configured accordingly.
 A detailed description can be found in the [official Gitea documentation](https://docs.gitea.io/en-us/signing/#general-configuration).
 
-### Metrics and profiling
+## Metrics and profiling
 
 A Prometheus `/metrics` endpoint on the `HTTP_PORT` and `pprof` profiling endpoints on port 6060 can be enabled under `gitea`.
 Beware that the metrics endpoint is exposed via the ingress, manage access using ingress annotations for example.
@@ -557,7 +597,7 @@ gitea:
       ENABLE_PPROF: true
 ```
 
-### Pod Annotations
+## Pod annotations
 
 Annotations can be added to the Gitea pod.
 
@@ -794,14 +834,16 @@ See [CONTRIBUTORS GUIDE](CONTRIBUTING.md) for details.
 This section lists major and breaking changes of each Helm Chart version.
 Please read them carefully to upgrade successfully.
 
-### To 8.0.0
+<details>
 
-#### Removal of MariaDB and MySQL DB chart dependencies
+<summary>To 8.0.0</summary>
+
+### Removal of MariaDB and MySQL DB chart dependencies <!-- omit from toc -->
 
 In this version support for DB chart dependencies of MySQL and MariaDB have been removed to simplify the maintenance of the helm chart.
 External MySQL and MariaDB databases are still supported and will be in the future.
 
-#### Postgres Update from v11 to v15
+### Postgres Update from v11 to v15 <!-- omit from toc -->
 
 This Chart version updates the Postgres chart dependency and subsequently Postgres from v11 to v15.
 Please read the [Postgres Release Notes](https://www.postgresql.org/docs/release/) for version-specific changes.
@@ -813,16 +855,24 @@ Please adjust your `values.yaml` accordingly.
 See [this comment](https://gitea.com/gitea/helm-chart/issues/452#issuecomment-740885) for an extensive walkthrough.
 We again highly encourage users to use an external (managed) database for production instances.
 
-### To 7.0.0
+</details>
 
-#### Private GPG key configuration for Gitea signing actions
+<details>
+
+<summary>To 7.0.0</summary>
+
+### Private GPG key configuration for Gitea signing actions <!-- omit from toc -->
 
 Having `signing.enabled=true` now requires to use either `signing.privateKey` or `signing.existingSecret` so that the Chart can automatically prepare the GPG key for Gitea internal signing actions.
 See [Configure commit signing](#configure-commit-signing) for details.
 
-### To 6.0.0
+</details>
 
-#### Different volume mounts for init-containers and runtime container
+<details>
+
+<summary>To 6.0.0</summary>
+
+### Different volume mounts for init-containers and runtime container <!-- omit from toc -->
 
 **The `extraVolumeMounts` is deprecated** in favor of `extraInitVolumeMounts` and `extraContainerVolumeMounts`.
 You can now have different mounts for the initialization phase and Gitea runtime.
@@ -831,7 +881,7 @@ If you want to switch to the new settings and want to mount specific volumes int
 
 **Combining values from the deprecated setting with values from the new settings is not possible.**
 
-#### New `enabled` flag for `startupProbe`
+### New `enabled` flag for `startupProbe` <!-- omit from toc -->
 
 Prior to this version the `startupProbe` was just a commented sample within the `values.yaml`.
 With the migration to an auto-generated [Parameters](#parameters) section, a new parameter `gitea.startupProbe.enabled` has been introduced set to
@@ -840,11 +890,15 @@ With the migration to an auto-generated [Parameters](#parameters) section, a new
 If you are using the `startupProbe` you need to add that new parameter and set it to `true`.
 Otherwise, your defined probe won't be considered after the upgrade.
 
-### To 5.0.0
+</details>
+
+<details>
+
+<summary>To 5.0.0</summary>
 
 > 💥 The Helm Chart now requires Gitea versions of at least 1.11.0.
 
-#### Enable Dependencies
+### Enable Dependencies <!-- omit from toc -->
 
 The values to enable the dependencies, such as PostgreSQL, Memcached, MySQL and MariaDB have been moved from `gitea.database.builtIn.` to the dependency values.
 
@@ -864,12 +918,12 @@ mariadb:
   enabled: false
 ```
 
-#### App.ini generation
+### App.ini generation <!-- omit from toc -->
 
 The app.ini generation has changed and now utilizes the environment-to-ini script provided by newer Gitea versions.
 This change ensures, that the app.ini is now persistent.
 
-##### Secret Key generation
+### Secret Key generation <!-- omit from toc -->
 
 Gitea secret keys (SECRET_KEY, INTERNAL_TOKEN, JWT_SECRET) are now generated automatically in certain situations:
 
@@ -882,7 +936,7 @@ Gitea secret keys (SECRET_KEY, INTERNAL_TOKEN, JWT_SECRET) are now generated aut
 > However, this it is not advisable to do so for existing installations.
 > Certain settings like _LDAP_ would not be readable anymore.
 
-#### Probes
+### Probes <!-- omit from toc -->
 
 `gitea.customLivenessProbe`, `gitea.customReadinessProbe` and `gitea.customStartupProbe` have been removed.
 
@@ -899,16 +953,20 @@ gitea:
   podAnnotations: {}
 ```
 
-#### Multiple OAuth and LDAP authentication sources
+### Multiple OAuth and LDAP authentication sources <!-- omit from toc -->
 
 With `5.0.0` of this Chart it is now possible to configure Gitea with multiple OAuth and LDAP sources.
 As a result, you need to update an existing OAuth/LDAP configuration in your customized `values.yaml` by replacing the object with settings to a list
 of settings objects.
 See [OAuth2 Settings](#oauth2-settings) and [LDAP Settings](#ldap-settings) section for details.
 
-### To 4.0.0
+</details>
 
-#### Ingress changes
+<details>
+
+<summary>To 4.0.0</summary>
+
+### Ingress changes <!-- omit from toc -->
 
 To provide a more flexible Ingress configuration we now support not only host settings but also provide configuration for the path and pathType.
 So this change changes the hosts from a simple string list, to a list containing a more complex object for more configuration.
@@ -940,12 +998,12 @@ paths:
     pathType: Prefix
 ```
 
-#### Dropped kebab-case support
+### Dropped kebab-case support <!-- omit from toc -->
 
 In 3.x.x it was possible to provide an ldap configuration via kebab-case, this support has now been dropped and only camel case is supported.
 See [LDAP section](#ldap-settings) for more information.
 
-#### Dependency update
+### Dependency update <!-- omit from toc -->
 
 The chart comes with multiple databases and Memcached as dependency, the latest release updated the dependencies.
 
@@ -955,7 +1013,7 @@ The chart comes with multiple databases and Memcached as dependency, the latest 
 
 If you're using the builtin databases you will most likely redeploy the chart in order to update the database correctly.
 
-#### Execution of initPreScript
+### Execution of initPreScript <!-- omit from toc -->
 
 Generally spoken, this might not be a breaking change, but it is worth to be mentioned.
 
@@ -965,11 +1023,11 @@ This also includes the execution of _initPreScript_.
 If you have such script, please be aware of this.
 Dynamically prepare the Gitea setup during execution by e.g. adding environment variables to the execution context won't work anymore.
 
-### Misc
-
-#### Gitea Version 1.14.X repository ROOT
+### Gitea Version 1.14.X repository ROOT <!-- omit from toc -->
 
 Previously the ROOT folder for the Gitea repositories was located at `/data/git/gitea-repositories`.
 In version `1.14` has the path been changed to `/data/gitea-repositories`.
 
 This chart will set the `gitea.config.repository.ROOT` value default to `/data/git/gitea-repositories`.
+
+</details>
