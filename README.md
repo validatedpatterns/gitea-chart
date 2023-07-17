@@ -92,6 +92,8 @@ When upgrading, please refer to the [Upgrading](#upgrading) section at the botto
 
 ## High Availability
 
+⚠️ **EXPERIMENTAL** ⚠️
+
 Since version 9.0.0 this chart has experimental support for running Gitea and it's dependencies in a HA setup.
 The setup is still experimental and care must be taken for production use as Gitea core is not yet officially HA-ready.
 

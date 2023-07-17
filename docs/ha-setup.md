@@ -1,6 +1,6 @@
 # High Availability
 
-**Experimental**
+⚠️ **EXPERIMENTAL** ⚠️
 
 All components (in-memory DB, volume/asset storage, code indexer) used by Gitea must be deployed in a HA-ready fashion to achieve a full HA-ready Gitea deployment.
 The following document explains how to achieve this for all individual components.
