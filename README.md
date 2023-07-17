@@ -927,6 +927,7 @@ The above changes are motivated by the idea to tidy dependencies but also have H
 The previous `memcache` default was not HA-ready, hence we decided to switch to `redis-cluster` by default.
 
 <!-- markdownlint-disable-next-line -->
+
 **Transitioning from a RWO to RWX Persistent Volume**
 
 If you want to switch to a RWX volume and go for HA, you need to
@@ -936,6 +937,7 @@ If you want to switch to a RWX volume and go for HA, you need to
 3. Restore the backup to the same location in the new PV
 
 <!-- markdownlint-disable-next-line -->
+
 **Transitioning from Postgres to Postgres HA**
 
 If you are running with a non-HA PG DB from a previous chart release, you need to set
@@ -944,6 +946,16 @@ If you are running with a non-HA PG DB from a previous chart release, you need t
 - `postgresql.enabled=true`
 
 This is needed to stay with your existing single-instance DB (as the HA-variant is the new default).
+
+<!-- markdownlint-disable-next-line -->
+
+**Change of env-to-ini prefix**
+
+Before this release, the env-to-ini prefix was `ENV_TO_INI__`.
+This allowed a clear distinction between user-provided and chart-provided env-to-ini variables.
+Due to the removal custom prefix feature in the upstream implementation of env-to-ini, the prefix has been changed to the default `GITEA__`.
+
+If you previously had defined env vars that had the `ENV_TO_INI__` prefix, you need to change them to `GITEA__` in order for them to be picked up by the chart.
 
 </details>
 
