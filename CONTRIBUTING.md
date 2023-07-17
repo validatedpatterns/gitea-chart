@@ -62,3 +62,9 @@ make unittests
 ```
 
 See [plugin documentation](https://github.com/helm-unittest/helm-unittest/blob/v0.3.3/DOCUMENT.md) for usage instructions.
+
+## Release process
+
+1. Create a tag following the tagging schema
+1. Push the tag
+1. Let CI do it's work
