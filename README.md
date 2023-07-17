@@ -4,7 +4,7 @@
 - [Update and versioning policy](#update-and-versioning-policy)
 - [Dependencies](#dependencies)
 - [Installing](#installing)
-- [Prerequisites](#prerequisites)
+- [High Availability](#high-availability)
 - [Configuration](#configuration)
   - [Default Configuration](#default-configuration)
   - [Additional _app.ini_ settings](#additional-appini-settings)
@@ -24,11 +24,12 @@
 - [Themes](#themes)
 - [Parameters](#parameters)
   - [Global](#global)
+  - [strategy](#strategy)
   - [Image](#image)
   - [Security](#security)
   - [Service](#service)
   - [Ingress](#ingress)
-  - [StatefulSet](#statefulset)
+  - [deployment](#deployment)
   - [ServiceAccount](#serviceaccount)
   - [Persistence](#persistence-1)
   - [Init](#init)
@@ -37,7 +38,8 @@
   - [LivenessProbe](#livenessprobe)
   - [ReadinessProbe](#readinessprobe)
   - [StartupProbe](#startupprobe)
-  - [Memcached](#memcached)
+  - [redis-cluster](#redis-cluster)
+  - [PostgreSQL-ha](#postgresql-ha)
   - [PostgreSQL](#postgresql)
   - [Advanced](#advanced)
 - [Contributing](#contributing)
@@ -49,8 +51,8 @@ It is published under the MIT license.
 ## Introduction
 
 This helm chart has taken some inspiration from [jfelten's helm chart](https://github.com/jfelten/gitea-helm-chart).
-But takes a completely different approach in providing a database and cache with dependencies.
-Additionally, this chart provides LDAP and admin user configuration with values, as well as being deployed as a statefulset to retain stored repositories.
+Yet it takes a completely different approach in providing a database and cache with dependencies.
+Additionally, this chart allows to provide LDAP and admin user configuration with values.
 
 ## Update and versioning policy
 
@@ -75,8 +77,8 @@ This chart provides those dependencies, which can be enabled, or disabled via co
 
 Dependencies:
 
-- PostgreSQL ([configuration](#postgresql))
-- Memcached ([configuration](#memcached))
+- PostgreSQL HA ([configuration](#postgresql))
+- Redis Cluster ([configuration](#cache))
 
 ## Installing
 
@@ -88,11 +90,13 @@ helm install gitea gitea-charts/gitea
 
 When upgrading, please refer to the [Upgrading](#upgrading) section at the bottom of this document for major and breaking changes.
 
-## Prerequisites
+## High Availability
 
-- Kubernetes 1.12+
-- Helm 3.0+
-- PV provisioner for persistent data support
+Since version 9.0.0 this chart has experimental support for running Gitea and it's dependencies in a HA setup.
+The setup is still experimental and care must be taken for production use as Gitea core is not yet officially HA-ready.
+
+Deploying a HA-ready Gitea instance requires some effort including using HA-ready dependencies.
+See the [HA Setup](docs/ha-setup.md) document for more details.
 
 ## Configuration
 
@@ -116,12 +120,12 @@ All defaults can be overwritten in `gitea.config`.
 
 INSTALL_LOCK is always set to true, since we want to configure Gitea with this helm chart and everything is taken care of.
 
-_All default settings are made directly in the generated app.ini, not in the Values._
+_All default settings are made directly in the generated `app.ini`, not in the Values._
 
 #### Database defaults
 
 If a builtIn database is enabled the database configuration is set automatically.
-For example, PostgreSQL builtIn will appear in the app.ini as:
+For example, PostgreSQL builtIn will appear in the `app.ini` as:
 
 ```ini
 [database]
@@ -130,18 +134,6 @@ HOST = RELEASE-NAME-postgresql.default.svc.cluster.local:5432
 NAME = gitea
 PASSWD = gitea
 USER = gitea
-```
-
-#### Memcached defaults
-
-Memcached is handled the exact same way as database builtIn.
-Once Memcached builtIn is enabled, this chart will generate the following part in the `app.ini`:
-
-```ini
-[cache]
-ADAPTER = memcache
-ENABLED = true
-HOST = RELEASE-NAME-memcached.default.svc.cluster.local:11211
 ```
 
 #### Server defaults
@@ -192,8 +184,7 @@ gitea:
         name: gitea-app-ini-plaintext
 ```
 
-This would mount the two additional volumes (`oauth` and `some-additionals`)
-from different sources to the init containerwhere the _app.ini_ gets updated.
+This would mount the two additional volumes (`oauth` and `some-additionals`) from different sources to the init container where the _app.ini_ gets updated.
 All files mounted that way will be read and converted to environment variables and then added to the _app.ini_ using [environment-to-ini](https://github.com/go-gitea/gitea/tree/main/contrib/environment-to-ini).
 
 The key of such additional source represents the section inside the _app.ini_.
@@ -237,6 +228,9 @@ We also support to directly interact with the generated _app.ini_.
 To inject self defined variables into the _app.ini_ a certain format needs to be honored.
 This is described in detail on the [env-to-ini](https://github.com/go-gitea/gitea/tree/main/contrib/environment-to-ini) page.
 
+Prior to Gitea 1.20 and Chart 9.0.0 the helm chart had a custom prefix `ENV_TO_INI`.
+After the support for a custom prefix was removed in Gite core, the prefix was changed to `GITEA`.
+
 For example a database setting needs to have the following format:
 
 ```yaml
@@ -259,7 +253,7 @@ Priority (highest to lowest) for defining app.ini variables:
 
 ### External Database
 
-Any external Database listed in [https://docs.gitea.io/en-us/database-prep/](https://docs.gitea.io/en-us/database-prep/) can be used instead of the built-in PostgreSQL.
+Any external database listed in [https://docs.gitea.io/en-us/database-prep/](https://docs.gitea.io/en-us/database-prep/) can be used instead of the built-in PostgreSQL.
 In fact, it is **highly recommended** to use an external database to ensure a stable Gitea installation longterm.
 
 If an external database is used, no matter which type, make sure to set `postgresql.enabled` to `false` to disable the use of the built-in PostgreSQL.
@@ -345,34 +339,23 @@ More about this issue [here](https://gitea.com/gitea/helm-chart/issues/161).
 
 ### Cache
 
-This helm chart can use a built in cache.
-The default is Memcached from bitnami.
+The cache handling is done via `redis-cluster` (via the `bitnami` chart) by default.
+This deployment is HA-ready but can also be used for single-pod deployments.
+By default, 6 replicas are deployed for a working `redis-cluster` deployment.
+Many cloud providers offer a managed redis service, which can be used instead of the built-in `redis-cluster`.
 
 ```yaml
-memcached:
+redis-cluster:
   enabled: true
-```
-
-If the built in cache should not be used simply configure the cache in `gitea.config`.
-
-```yaml
-gitea:
-  config:
-    cache:
-      ENABLED: true
-      ADAPTER: memory
-      INTERVAL: 60
-      HOST: 127.0.0.1:9090
 ```
 
 ### Persistence
 
-Gitea will be deployed as a statefulset.
+Gitea will be deployed as a deployment.
 By simply enabling the persistence and setting the storage class according to your cluster everything else will be taken care of.
-The following example will create a PVC as a part of the statefulset.
-This PVC will not be deleted even if you uninstall the chart.
+The following example will create a PVC as a part of the deployment.
 
-Please note, that an empty storageClass in the persistence will result in kubernetes using your default storage class.
+Please note, that an empty `storageClass` in the persistence will result in kubernetes using your default storage class.
 
 If you want to use your own storage class define it as follows:
 
@@ -382,14 +365,12 @@ persistence:
   storageClass: myOwnStorageClass
 ```
 
-When using PostgreSQL as dependency, this will also be deployed as a statefulset by default.
-
 If you want to manage your own PVC you can simply pass the PVC name to the chart.
 
 ```yaml
 persistence:
   enabled: true
-  existingClaim: MyAwesomeGiteaClaim
+  claimName: MyAwesomeGiteaClaim
 ```
 
 In case that persistence has been disabled it will simply use an empty dir volume.
@@ -401,13 +382,13 @@ You can interact with the postgres settings as displayed in the following exampl
 postgresql:
   persistence:
     enabled: true
-    existingClaim: MyAwesomeGiteaPostgresClaim
+    claimName: MyAwesomeGiteaPostgresClaim
 ```
 
 ### Admin User
 
 This chart enables you to create a default admin user.
-It is also possible to update the password for this user by upgrading or redeloying the chart.
+It is also possible to update the password for this user by upgrading or redeploying the chart.
 It is not possible to delete an admin user after it has been created.
 This has to be done in the ui.
 You cannot use `admin` as username.
@@ -651,14 +632,22 @@ kubectl create secret generic gitea-themes --from-file={{FULL-PATH-TO-CSS}} --na
 
 ### Global
 
-| Name                      | Description                                                               | Value           |
-| ------------------------- | ------------------------------------------------------------------------- | --------------- |
-| `global.imageRegistry`    | global image registry override                                            | `""`            |
-| `global.imagePullSecrets` | global image pull secrets override; can be extended by `imagePullSecrets` | `[]`            |
-| `global.storageClass`     | global storage class override                                             | `""`            |
-| `global.hostAliases`      | global hostAliases which will be added to the pod's hosts files           | `[]`            |
-| `replicaCount`            | number of replicas for the statefulset                                    | `1`             |
-| `clusterDomain`           | cluster domain                                                            | `cluster.local` |
+| Name                      | Description                                                               | Value |
+| ------------------------- | ------------------------------------------------------------------------- | ----- |
+| `global.imageRegistry`    | global image registry override                                            | `""`  |
+| `global.imagePullSecrets` | global image pull secrets override; can be extended by `imagePullSecrets` | `[]`  |
+| `global.storageClass`     | global storage class override                                             | `""`  |
+| `global.hostAliases`      | global hostAliases which will be added to the pod's hosts files           | `[]`  |
+| `replicaCount`            | number of replicas for the deployment                                     | `1`   |
+
+### strategy
+
+| Name                                    | Description    | Value           |
+| --------------------------------------- | -------------- | --------------- |
+| `strategy.type`                         | strategy type  | `RollingUpdate` |
+| `strategy.rollingUpdate.maxSurge`       | maxSurge       | `100%`          |
+| `strategy.rollingUpdate.maxUnavailable` | maxUnavailable | `0`             |
+| `clusterDomain`                         | cluster domain | `cluster.local` |
 
 ### Image
 
@@ -678,6 +667,7 @@ kubectl create secret generic gitea-themes --from-file={{FULL-PATH-TO-CSS}} --na
 | `podSecurityContext.fsGroup` | Set the shared file system group for all containers in the pod. | `1000` |
 | `containerSecurityContext`   | Security context                                                | `{}`   |
 | `securityContext`            | Run init and Gitea containers as a specific securityContext     | `{}`   |
+| `podDisruptionBudget`        | Pod disruption budget                                           | `{}`   |
 
 ### Service
 
@@ -685,7 +675,7 @@ kubectl create secret generic gitea-themes --from-file={{FULL-PATH-TO-CSS}} --na
 | --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
 | `service.http.type`                     | Kubernetes service type for web traffic                                                                                                                                                              | `ClusterIP` |
 | `service.http.port`                     | Port number for web traffic                                                                                                                                                                          | `3000`      |
-| `service.http.clusterIP`                | ClusterIP setting for http autosetup for statefulset is None                                                                                                                                         | `None`      |
+| `service.http.clusterIP`                | ClusterIP setting for http autosetup for deployment is None                                                                                                                                          | `None`      |
 | `service.http.loadBalancerIP`           | LoadBalancer IP setting                                                                                                                                                                              | `nil`       |
 | `service.http.nodePort`                 | NodePort for http service                                                                                                                                                                            | `nil`       |
 | `service.http.externalTrafficPolicy`    | If `service.http.type` is `NodePort` or `LoadBalancer`, set this to `Local` to enable source IP preservation                                                                                         | `nil`       |
@@ -696,7 +686,7 @@ kubectl create secret generic gitea-themes --from-file={{FULL-PATH-TO-CSS}} --na
 | `service.http.annotations`              | HTTP service annotations                                                                                                                                                                             | `{}`        |
 | `service.ssh.type`                      | Kubernetes service type for ssh traffic                                                                                                                                                              | `ClusterIP` |
 | `service.ssh.port`                      | Port number for ssh traffic                                                                                                                                                                          | `22`        |
-| `service.ssh.clusterIP`                 | ClusterIP setting for ssh autosetup for statefulset is None                                                                                                                                          | `None`      |
+| `service.ssh.clusterIP`                 | ClusterIP setting for ssh autosetup for deployment is None                                                                                                                                           | `None`      |
 | `service.ssh.loadBalancerIP`            | LoadBalancer IP setting                                                                                                                                                                              | `nil`       |
 | `service.ssh.nodePort`                  | NodePort for ssh service                                                                                                                                                                             | `nil`       |
 | `service.ssh.externalTrafficPolicy`     | If `service.ssh.type` is `NodePort` or `LoadBalancer`, set this to `Local` to enable source IP preservation                                                                                          | `nil`       |
@@ -720,21 +710,22 @@ kubectl create secret generic gitea-themes --from-file={{FULL-PATH-TO-CSS}} --na
 | `ingress.tls`                        | Ingress tls settings                                                        | `[]`              |
 | `ingress.apiVersion`                 | Specify APIVersion of ingress object. Mostly would only be used for argocd. |                   |
 
-### StatefulSet
+### deployment
 
-| Name                                        | Description                                            | Value |
-| ------------------------------------------- | ------------------------------------------------------ | ----- |
-| `resources`                                 | Kubernetes resources                                   | `{}`  |
-| `schedulerName`                             | Use an alternate scheduler, e.g. "stork"               | `""`  |
-| `nodeSelector`                              | NodeSelector for the statefulset                       | `{}`  |
-| `tolerations`                               | Tolerations for the statefulset                        | `[]`  |
-| `affinity`                                  | Affinity for the statefulset                           | `{}`  |
-| `dnsConfig`                                 | dnsConfig for the statefulset                          | `{}`  |
-| `priorityClassName`                         | priorityClassName for the statefulset                  | `""`  |
-| `statefulset.env`                           | Additional environment variables to pass to containers | `[]`  |
-| `statefulset.terminationGracePeriodSeconds` | How long to wait until forcefully kill the pod         | `60`  |
-| `statefulset.labels`                        | Labels for the statefulset                             | `{}`  |
-| `statefulset.annotations`                   | Annotations for the Gitea StatefulSet to be created    | `{}`  |
+| Name                                       | Description                                            | Value |
+| ------------------------------------------ | ------------------------------------------------------ | ----- |
+| `resources`                                | Kubernetes resources                                   | `{}`  |
+| `schedulerName`                            | Use an alternate scheduler, e.g. "stork"               | `""`  |
+| `nodeSelector`                             | NodeSelector for the deployment                        | `{}`  |
+| `tolerations`                              | Tolerations for the deployment                         | `[]`  |
+| `affinity`                                 | Affinity for the deployment                            | `{}`  |
+| `topologySpreadConstraints`                | TopologySpreadConstraints for the deployment           | `[]`  |
+| `dnsConfig`                                | dnsConfig for the deployment                           | `{}`  |
+| `priorityClassName`                        | priorityClassName for the deployment                   | `""`  |
+| `deployment.env`                           | Additional environment variables to pass to containers | `[]`  |
+| `deployment.terminationGracePeriodSeconds` | How long to wait until forcefully kill the pod         | `60`  |
+| `deployment.labels`                        | Labels for the deployment                              | `{}`  |
+| `deployment.annotations`                   | Annotations for the Gitea deployment to be created     | `{}`  |
 
 ### ServiceAccount
 
@@ -749,20 +740,22 @@ kubectl create secret generic gitea-themes --from-file={{FULL-PATH-TO-CSS}} --na
 
 ### Persistence
 
-| Name                         | Description                                                                                           | Value               |
-| ---------------------------- | ----------------------------------------------------------------------------------------------------- | ------------------- |
-| `persistence.enabled`        | Enable persistent storage                                                                             | `true`              |
-| `persistence.existingClaim`  | Use an existing claim to store repository information                                                 | `nil`               |
-| `persistence.size`           | Size for persistence to store repo information                                                        | `10Gi`              |
-| `persistence.accessModes`    | AccessMode for persistence                                                                            | `["ReadWriteOnce"]` |
-| `persistence.labels`         | Labels for the persistence volume claim to be created                                                 | `{}`                |
-| `persistence.annotations`    | Annotations for the persistence volume claim to be created                                            | `{}`                |
-| `persistence.storageClass`   | Name of the storage class to use                                                                      | `nil`               |
-| `persistence.subPath`        | Subdirectory of the volume to mount at                                                                | `nil`               |
-| `extraVolumes`               | Additional volumes to mount to the Gitea statefulset                                                  | `[]`                |
-| `extraContainerVolumeMounts` | Mounts that are only mapped into the Gitea runtime/main container, to e.g. override custom templates. | `[]`                |
-| `extraInitVolumeMounts`      | Mounts that are only mapped into the init-containers. Can be used for additional preconfiguration.    | `[]`                |
-| `extraVolumeMounts`          | **DEPRECATED** Additional volume mounts for init containers and the Gitea main container              | `[]`                |
+| Name                         | Description                                                                                           | Value                  |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------- | ---------------------- |
+| `persistence.enabled`        | Enable persistent storage                                                                             | `true`                 |
+| `persistence.create`         | Whether to create the persistentVolumeClaim for shared storage                                        | `true`                 |
+| `persistence.mount`          | Whether the persistentVolumeClaim should be mounted (even if not created)                             | `true`                 |
+| `persistence.claimName`      | Use an existing claim to store repository information                                                 | `gitea-shared-storage` |
+| `persistence.size`           | Size for persistence to store repo information                                                        | `10Gi`                 |
+| `persistence.accessModes`    | AccessMode for persistence                                                                            | `["ReadWriteOnce"]`    |
+| `persistence.labels`         | Labels for the persistence volume claim to be created                                                 | `{}`                   |
+| `persistence.annotations`    | Annotations for the persistence volume claim to be created                                            | `{}`                   |
+| `persistence.storageClass`   | Name of the storage class to use                                                                      | `nil`                  |
+| `persistence.subPath`        | Subdirectory of the volume to mount at                                                                | `nil`                  |
+| `extraVolumes`               | Additional volumes to mount to the Gitea deployment                                                   | `[]`                   |
+| `extraContainerVolumeMounts` | Mounts that are only mapped into the Gitea runtime/main container, to e.g. override custom templates. | `[]`                   |
+| `extraInitVolumeMounts`      | Mounts that are only mapped into the init-containers. Can be used for additional preconfiguration.    | `[]`                   |
+| `extraVolumeMounts`          | **DEPRECATED** Additional volume mounts for init containers and the Gitea main container              | `[]`                   |
 
 ### Init
 
@@ -784,21 +777,22 @@ kubectl create secret generic gitea-themes --from-file={{FULL-PATH-TO-CSS}} --na
 
 ### Gitea
 
-| Name                                   | Description                                                                                                   | Value                |
-| -------------------------------------- | ------------------------------------------------------------------------------------------------------------- | -------------------- |
-| `gitea.admin.username`                 | Username for the Gitea admin user                                                                             | `gitea_admin`        |
-| `gitea.admin.existingSecret`           | Use an existing secret to store admin user credentials                                                        | `nil`                |
-| `gitea.admin.password`                 | Password for the Gitea admin user                                                                             | `r8sA8CPHD9!bt6d`    |
-| `gitea.admin.email`                    | Email for the Gitea admin user                                                                                | `gitea@local.domain` |
-| `gitea.metrics.enabled`                | Enable Gitea metrics                                                                                          | `false`              |
-| `gitea.metrics.serviceMonitor.enabled` | Enable Gitea metrics service monitor                                                                          | `false`              |
-| `gitea.ldap`                           | LDAP configuration                                                                                            | `[]`                 |
-| `gitea.oauth`                          | OAuth configuration                                                                                           | `[]`                 |
-| `gitea.config`                         | Configuration for the Gitea server,ref: [config-cheat-sheet](https://docs.gitea.io/en-us/config-cheat-sheet/) | `{}`                 |
-| `gitea.additionalConfigSources`        | Additional configuration from secret or configmap                                                             | `[]`                 |
-| `gitea.additionalConfigFromEnvs`       | Additional configuration sources from environment variables                                                   | `[]`                 |
-| `gitea.podAnnotations`                 | Annotations for the Gitea pod                                                                                 | `{}`                 |
-| `gitea.ssh.logLevel`                   | Configure OpenSSH's log level. Only available for root-based Gitea image.                                     | `INFO`               |
+| Name                                   | Description                                                               | Value                |
+| -------------------------------------- | ------------------------------------------------------------------------- | -------------------- |
+| `gitea.admin.username`                 | Username for the Gitea admin user                                         | `gitea_admin`        |
+| `gitea.admin.existingSecret`           | Use an existing secret to store admin user credentials                    | `nil`                |
+| `gitea.admin.password`                 | Password for the Gitea admin user                                         | `r8sA8CPHD9!bt6d`    |
+| `gitea.admin.email`                    | Email for the Gitea admin user                                            | `gitea@local.domain` |
+| `gitea.metrics.enabled`                | Enable Gitea metrics                                                      | `false`              |
+| `gitea.metrics.serviceMonitor.enabled` | Enable Gitea metrics service monitor                                      | `false`              |
+| `gitea.ldap`                           | LDAP configuration                                                        | `[]`                 |
+| `gitea.oauth`                          | OAuth configuration                                                       | `[]`                 |
+| `gitea.config.server.SSH_PORT`         | SSH port for rootlful Gitea image                                         | `22`                 |
+| `gitea.config.server.SSH_LISTEN_PORT`  | SSH port for rootless Gitea image                                         | `2222`               |
+| `gitea.additionalConfigSources`        | Additional configuration from secret or configmap                         | `[]`                 |
+| `gitea.additionalConfigFromEnvs`       | Additional configuration sources from environment variables               | `[]`                 |
+| `gitea.podAnnotations`                 | Annotations for the Gitea pod                                             | `{}`                 |
+| `gitea.ssh.logLevel`                   | Configure OpenSSH's log level. Only available for root-based Gitea image. | `INFO`               |
 
 ### LivenessProbe
 
@@ -836,18 +830,29 @@ kubectl create secret generic gitea-themes --from-file={{FULL-PATH-TO-CSS}} --na
 | `gitea.startupProbe.successThreshold`    | Success threshold for startup probe             | `1`     |
 | `gitea.startupProbe.failureThreshold`    | Failure threshold for startup probe             | `10`    |
 
-### Memcached
+### redis-cluster
 
-| Name                                | Description                                                                                                                                                                                           | Value   |
-| ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
-| `memcached.enabled`                 | Memcached is loaded as a dependency from [Bitnami](https://github.com/bitnami/charts/tree/master/bitnami/memcached) if enabled in the values. Complete Configuration can be taken from their website. | `true`  |
-| `memcached.service.ports.memcached` | Port for Memcached                                                                                                                                                                                    | `11211` |
+| Name                                  | Description                                          | Value   |
+| ------------------------------------- | ---------------------------------------------------- | ------- |
+| `redis-cluster.enabled`               | Enable redis                                         | `true`  |
+| `redis-cluster.global.redis.password` | Password for the "Gitea" user (overrides `password`) | `gitea` |
+
+### PostgreSQL-ha
+
+| Name                                                             | Description                                                          | Value   |
+| ---------------------------------------------------------------- | -------------------------------------------------------------------- | ------- |
+| `postgresql-ha.enabled`                                          | Enable PostgreSQL-ha                                                 | `true`  |
+| `postgresql-ha.global.postgresql-ha.auth.password`               | Password for the `gitea` user (overrides `auth.password`)            | `gitea` |
+| `postgresql-ha.global.postgresql-ha.auth.database`               | Name for a custom database to create (overrides `auth.database`)     | `gitea` |
+| `postgresql-ha.global.postgresql-ha.auth.username`               | Name for a custom user to create (overrides `auth.username`)         | `gitea` |
+| `postgresql-ha.global.postgresql-ha.service.ports.postgresql-ha` | PostgreSQL-ha service port (overrides `service.ports.postgresql-ha`) | `5432`  |
+| `postgresql-ha.primary.persistence.size`                         | PVC Storage Request for PostgreSQL-ha volume                         | `10Gi`  |
 
 ### PostgreSQL
 
 | Name                                                    | Description                                                      | Value   |
 | ------------------------------------------------------- | ---------------------------------------------------------------- | ------- |
-| `postgresql.enabled`                                    | Enable PostgreSQL                                                | `true`  |
+| `postgresql.enabled`                                    | Enable PostgreSQL                                                | `false` |
 | `postgresql.global.postgresql.auth.password`            | Password for the `gitea` user (overrides `auth.password`)        | `gitea` |
 | `postgresql.global.postgresql.auth.database`            | Name for a custom database to create (overrides `auth.database`) | `gitea` |
 | `postgresql.global.postgresql.auth.username`            | Name for a custom user to create (overrides `auth.username`)     | `gitea` |
@@ -873,7 +878,72 @@ See [CONTRIBUTORS GUIDE](CONTRIBUTING.md) for details.
 ## Upgrading
 
 This section lists major and breaking changes of each Helm Chart version.
-Please read them carefully to upgrade successfully.
+Please read them carefully to upgrade successfully, especially the change of the **default database backend**!
+If you miss this, blindly upgrading may delete your Postgres instance and you may lose your data!
+
+<details>
+
+<summary>To 9.0.0</summary>
+
+This chart release comes with many breaking changes while aiming for a HA-ready setup.
+Please go through all of them carefully to perform a successful upgrade.
+Here's a brief summary again, followed by more detailed migration instructions:
+
+- Switch from `Statefulset` to `Deployment`
+- Switch from `Memcached` to `redis-cluster` as the default session and queue provider
+- Switch from `postgres` to `postgres-ha` as the default database provider
+- A chart-internal PVC bootstrapping logic
+  - New `persistence.mount`: whether to mount an existent PVC (even if not creating it)
+  - New `persistence.create`: whether to create a new PVC
+  - Renamed `persistence.existingClaim` to `persistence.claimName`
+
+While not required, we recommend to start with a RWX PV for new installations.
+A RWX volume is required for installation aiming for HA.
+
+If you want to stay with a pre-existing RWO PV, you need to set
+
+- `persistence.mount=true`
+- `persistence.create=false`
+- `persistence.claimName` to the name of your existing PVC.
+
+If you do not, Gitea will create a new PVC which will in turn create a new PV.
+If this happened to you by accident, you can still recover your data by setting using the settings from above in a subsequent run.
+
+If you want to stay with a `memcache` instead of `redis-cluster`, you need to deploy `memcache` manually (e.g. from [bitnami](https://github.com/bitnami/charts/tree/main/bitnami/memcached)) and set
+
+- `cache.HOST = "<memcache connection string>"`
+- `cache.ADAPTER = "memcache"`
+- `session.PROVIDER = "memcache"`
+- `session.PROVIDER_CONFIG = "<memcache connection string>"`
+- `queue.TYPE = "memcache"`
+- `queue.CONN_STR = "<memcache connection string>"`
+
+The `memcache` connection string has the scheme `memcache://<memcache service name>:<memcache service port>`, e.g. `gitea-memcached.gitea.svc.cluster.local:11211`.
+The first item here (`<memcache service name>`) will be different compared to the example if you deploy `memcache` yourself.
+
+The above changes are motivated by the idea to tidy dependencies but also have HA-ready ones at the same time.
+The previous `memcache` default was not HA-ready, hence we decided to switch to `redis-cluster` by default.
+
+<!-- markdownlint-disable-next-line -->
+**Transitioning from a RWO to RWX Persistent Volume**
+
+If you want to switch to a RWX volume and go for HA, you need to
+
+1. Backup the data stored under `/data`
+2. Let the chart create a new RWX PV (or do it statically yourself)
+3. Restore the backup to the same location in the new PV
+
+<!-- markdownlint-disable-next-line -->
+**Transitioning from Postgres to Postgres HA**
+
+If you are running with a non-HA PG DB from a previous chart release, you need to set
+
+- `postgresql-ha.enabled=false`
+- `postgresql.enabled=true`
+
+This is needed to stay with your existing single-instance DB (as the HA-variant is the new default).
+
+</details>
 
 <details>
 
