@@ -113,7 +113,7 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end -}}
 
 {{- define "postgresql.dns" -}}
-{{- printf "%s-postgresql.%s.svc.%s:%g" .Release.Name .Release.Namespace .Values.clusterDomain .Values.postgresql.global.postgresql.service.ports.postgresql -}}
+{{- printf "%s-postgresql-ha.%s.svc.%s:%g" .Release.Name .Release.Namespace .Values.clusterDomain .Values.postgresql-ha.global.postgresql-ha.service.ports.postgresql-ha -}}
 {{- end -}}
 
 {{- define "redis.dns" -}}
@@ -274,7 +274,7 @@ https
   {{- if not (hasKey .Values.gitea.config.metrics "ENABLED") -}}
     {{- $_ := set .Values.gitea.config.metrics "ENABLED" .Values.gitea.metrics.enabled -}}
   {{- end -}}
- {{- if (index .Values "redis-cluster").enabled -}}
+  {{- if (index .Values "redis-cluster").enabled -}}
     {{- $_ := set .Values.gitea.config.cache "ENABLED" "true" -}}
     {{- $_ := set .Values.gitea.config.cache "ADAPTER" "redis" -}}
     {{- if not (.Values.gitea.config.cache.HOST) -}}
@@ -349,9 +349,9 @@ https
     {{- if not (.Values.gitea.config.database.HOST) -}}
       {{- $_ := set .Values.gitea.config.database "HOST"      (include "postgresql.dns" .) -}}
     {{- end -}}
-    {{- $_ := set .Values.gitea.config.database "NAME"      .Values.postgresql.global.postgresql.auth.database -}}
-    {{- $_ := set .Values.gitea.config.database "USER"      .Values.postgresql.global.postgresql.auth.username -}}
-    {{- $_ := set .Values.gitea.config.database "PASSWD"    .Values.postgresql.global.postgresql.auth.password -}}
+    {{- $_ := set .Values.gitea.config.database "NAME"      .Values.postgresql-ha.global.postgresql-ha.auth.database -}}
+    {{- $_ := set .Values.gitea.config.database "USER"      .Values.postgresql-ha.global.postgresql-ha.auth.username -}}
+    {{- $_ := set .Values.gitea.config.database "PASSWD"    .Values.postgresql-ha.global.postgresql-ha.auth.password -}}
   {{- end -}}
 {{- end -}}
 
