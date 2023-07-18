@@ -286,17 +286,14 @@ https
     {{- $_ := set .Values.gitea.config.queue "TYPE" "redis" -}}
     {{- $_ := set .Values.gitea.config.queue "CONN_STR" (include "redis.dns" .) -}}
   {{- end -}}
-  {{- /* multiple replicas */ -}}
-  {{- if gt .Values.replicaCount 1.0 -}}
-    {{- if not (get .Values.gitea.config.session "PROVIDER") -}}
+  {{- if not (get .Values.gitea.config.session "PROVIDER") -}}
     {{- $_ := set .Values.gitea.config.session "PROVIDER" "redis" -}}
-    {{- end -}}
-    {{- if not (get .Values.gitea.config.session "PROVIDER_CONFIG") -}}
+  {{- end -}}
+  {{- if not (get .Values.gitea.config.session "PROVIDER_CONFIG") -}}
     {{- $_ := set .Values.gitea.config.session "PROVIDER_CONFIG" (include "redis.dns" .) -}}
-    {{- end -}}
+  {{- end -}}
   {{- if not .Values.gitea.config.indexer.ISSUE_INDEXER_TYPE -}}
      {{- $_ := set .Values.gitea.config.indexer "ISSUE_INDEXER_TYPE" "db" -}}
-  {{- end -}}
   {{- end -}}
 {{- end -}}
 
