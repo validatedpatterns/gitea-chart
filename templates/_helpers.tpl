@@ -113,7 +113,7 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end -}}
 
 {{- define "postgresql.dns" -}}
-{{- printf "%s-postgresql-ha-postgresql.%s.svc.%s:%g" .Release.Name .Release.Namespace .Values.clusterDomain (index .Values "postgresql-ha" "global" "postgresql" "service" "ports" "postgresql") -}}
+{{- printf "%s-postgresql-ha-postgresql.%s.svc.%s:%g" .Release.Name .Release.Namespace .Values.clusterDomain (index .Values "postgresql-ha" "service" "ports" "postgresql") -}}
 {{- end -}}
 
 {{- define "redis.dns" -}}
