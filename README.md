@@ -927,7 +927,6 @@ The above changes are motivated by the idea to tidy dependencies but also have H
 The previous `memcache` default was not HA-ready, hence we decided to switch to `redis-cluster` by default.
 
 <!-- markdownlint-disable-next-line -->
-
 **Transitioning from a RWO to RWX Persistent Volume**
 
 If you want to switch to a RWX volume and go for HA, you need to
@@ -937,7 +936,6 @@ If you want to switch to a RWX volume and go for HA, you need to
 3. Restore the backup to the same location in the new PV
 
 <!-- markdownlint-disable-next-line -->
-
 **Transitioning from Postgres to Postgres HA**
 
 If you are running with a non-HA PG DB from a previous chart release, you need to set
@@ -948,7 +946,6 @@ If you are running with a non-HA PG DB from a previous chart release, you need t
 This is needed to stay with your existing single-instance DB (as the HA-variant is the new default).
 
 <!-- markdownlint-disable-next-line -->
-
 **Change of env-to-ini prefix**
 
 Before this release, the env-to-ini prefix was `ENV_TO_INI__`.
