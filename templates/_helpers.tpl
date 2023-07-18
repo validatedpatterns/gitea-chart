@@ -113,7 +113,7 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end -}}
 
 {{- define "postgresql.dns" -}}
-{{- printf "%s-postgresql-ha.%s.svc.%s:%g" .Release.Name .Release.Namespace .Values.clusterDomain .Values.postgresql-ha.global.postgresql-ha.service.ports.postgresql-ha -}}
+{{- printf "%s-postgresql-ha.%s.svc.%s:%g" .Release.Name .Release.Namespace .Values.clusterDomain (index .Values "postgresql-ha" "global" "postgresql-ha" "service" "ports" "postgresql-ha") -}}
 {{- end -}}
 
 {{- define "redis.dns" -}}
@@ -349,9 +349,9 @@ https
     {{- if not (.Values.gitea.config.database.HOST) -}}
       {{- $_ := set .Values.gitea.config.database "HOST"      (include "postgresql.dns" .) -}}
     {{- end -}}
-    {{- $_ := set .Values.gitea.config.database "NAME"      .Values.postgresql-ha.global.postgresql-ha.auth.database -}}
-    {{- $_ := set .Values.gitea.config.database "USER"      .Values.postgresql-ha.global.postgresql-ha.auth.username -}}
-    {{- $_ := set .Values.gitea.config.database "PASSWD"    .Values.postgresql-ha.global.postgresql-ha.auth.password -}}
+    {{- $_ := set .Values.gitea.config.database "NAME"      (index .Values "postgresql-ha" "global" "postgresql-ha" "auth" "database") -}}
+    {{- $_ := set .Values.gitea.config.database "USER"      (index .Values "postgresql-ha" "global" "postgresql-ha" "auth" "username") -}}
+    {{- $_ := set .Values.gitea.config.database "PASSWD"    (index .Values "postgresql-ha" "global" "postgresql-ha" "auth" "password") -}}
   {{- end -}}
 {{- end -}}
 
