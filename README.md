@@ -841,14 +841,16 @@ kubectl create secret generic gitea-themes --from-file={{FULL-PATH-TO-CSS}} --na
 
 ### PostgreSQL-ha
 
-| Name                                                             | Description                                                          | Value   |
-| ---------------------------------------------------------------- | -------------------------------------------------------------------- | ------- |
-| `postgresql-ha.enabled`                                          | Enable PostgreSQL-ha                                                 | `true`  |
-| `postgresql-ha.global.postgresql-ha.auth.password`               | Password for the `gitea` user (overrides `auth.password`)            | `gitea` |
-| `postgresql-ha.global.postgresql-ha.auth.database`               | Name for a custom database to create (overrides `auth.database`)     | `gitea` |
-| `postgresql-ha.global.postgresql-ha.auth.username`               | Name for a custom user to create (overrides `auth.username`)         | `gitea` |
-| `postgresql-ha.global.postgresql-ha.service.ports.postgresql-ha` | PostgreSQL-ha service port (overrides `service.ports.postgresql-ha`) | `5432`  |
-| `postgresql-ha.primary.persistence.size`                         | PVC Storage Request for PostgreSQL-ha volume                         | `10Gi`  |
+| Name                                               | Description                                                      | Value      |
+| -------------------------------------------------- | ---------------------------------------------------------------- | ---------- |
+| `postgresql-ha.enabled`                            | Enable PostgreSQL-ha                                             | `true`     |
+| `postgresql-ha.global.postgresql.password`         | Password for the `gitea` user (overrides `auth.password`)        | `gitea`    |
+| `postgresql-ha.global.postgresql.database`         | Name for a custom database to create (overrides `auth.database`) | `gitea`    |
+| `postgresql-ha.global.postgresql.username`         | Name for a custom user to create (overrides `auth.username`)     | `gitea`    |
+| `postgresql-ha.global.postgresql.postgresPassword` | Postgres Password                                                | `changeme` |
+| `postgresql-ha.global.postgresql.repmgrPassword`   | Repmgr Password                                                  | `changeme` |
+| `postgresql-ha.service.ports.postgresql`           | PostgreSQL service port (overrides `service.ports.postgresql`)   | `5432`     |
+| `postgresql-ha.primary.persistence.size`           | PVC Storage Request for PostgreSQL-ha volume                     | `10Gi`     |
 
 ### PostgreSQL
 
