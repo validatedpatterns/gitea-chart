@@ -489,14 +489,14 @@ redis-cluster:
 postgresql-ha:
   enabled: true
   global:
-    postgresql-ha:
+    postgresql:
       auth:
         password: gitea
         database: gitea
         username: gitea
       service:
         ports:
-          postgresql-ha: 5432
+          postgresql: 5432
   primary:
     persistence:
       size: 10Gi
