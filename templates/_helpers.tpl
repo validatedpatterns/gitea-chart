@@ -344,7 +344,7 @@ https
 {{- end -}}
 
 {{- define "gitea.inline_configuration.defaults.database" -}}
-  {{- if .Values.postgresql-ha.enabled -}}
+  {{- if (index .Values "postgresql-ha" "enabled") -}}
     {{- $_ := set .Values.gitea.config.database "DB_TYPE"   "postgres" -}}
     {{- if not (.Values.gitea.config.database.HOST) -}}
       {{- $_ := set .Values.gitea.config.database "HOST"      (include "postgresql.dns" .) -}}
