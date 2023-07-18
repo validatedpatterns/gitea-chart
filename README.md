@@ -926,6 +926,23 @@ The first item here (`<memcache service name>`) will be different compared to th
 The above changes are motivated by the idea to tidy dependencies but also have HA-ready ones at the same time.
 The previous `memcache` default was not HA-ready, hence we decided to switch to `redis-cluster` by default.
 
+If you are coming from an existing deployment and [#356](https://gitea.com/gitea/helm-chart/issues/356) is still open, you need to set the config sections for `cache`, `session` and `queue` explicitly:
+
+```yaml
+    session:
+      PROVIDER: redis
+      PROVIDER_CONFIG: redis+cluster://:gitea@gitea-redis-cluster-headless.<namespace>.svc.cluster.local:6379/0?pool_size=100&idle_timeout=180s&
+      
+    cache:
+      ENABLED: true
+      ADAPTER: redis
+      HOST: redis+cluster://:gitea@gitea-redis-cluster-headless.<namespace>.svc.cluster.local:6379/0?pool_size=100&idle_timeout=180s&
+      
+    queue:
+      TYPE: redis
+      CONN_STR: redis+cluster://:gitea@gitea-redis-cluster-headless.<namespace>.svc.cluster.local:6379/0?pool_size=100&idle_timeout=180s&
+```
+
 <!-- markdownlint-disable-next-line -->
 **Transitioning from a RWO to RWX Persistent Volume**
 
