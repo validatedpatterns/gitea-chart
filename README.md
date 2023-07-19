@@ -932,12 +932,12 @@ If you are coming from an existing deployment and [#356](https://gitea.com/gitea
 
 ```yaml
     session:
-      PROVIDER: redis
+      PROVIDER: redis-cluster
       PROVIDER_CONFIG: redis+cluster://:gitea@gitea-redis-cluster-headless.<namespace>.svc.cluster.local:6379/0?pool_size=100&idle_timeout=180s&
       
     cache:
       ENABLED: true
-      ADAPTER: redis
+      ADAPTER: redis-cluster
       HOST: redis+cluster://:gitea@gitea-redis-cluster-headless.<namespace>.svc.cluster.local:6379/0?pool_size=100&idle_timeout=180s&
       
     queue:
