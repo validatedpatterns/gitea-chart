@@ -485,6 +485,7 @@ redis-cluster:
 ## @param postgresql-ha.postgresql.password Password for the `gitea` user (overrides `auth.password`)
 ## @param postgresql-ha.global.postgresql.database Name for a custom database to create (overrides `auth.database`)
 ## @param postgresql-ha.global.postgresql.username Name for a custom user to create (overrides `auth.username`)
+## @param postgresql-ha.global.postgresql.password Name for a custom password to create (overrides `auth.password`)
 ## @param postgresql-ha.postgresql.repmgrPassword Repmgr Password
 ## @param postgresql-ha.postgresql.postgresPassword postgres Password
 ## @param postgresql-ha.pgpool.adminPassword pgpool adminPassword
@@ -494,6 +495,7 @@ postgresql-ha:
   global:
     postgresql:
       database: gitea
+      password: gitea
       username: gitea
   enabled: true
   postgresql:
