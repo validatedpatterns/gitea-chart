@@ -742,23 +742,23 @@ kubectl create secret generic gitea-themes --from-file={{FULL-PATH-TO-CSS}} --na
 
 ### Persistence
 
-| Name                         | Description                                                                                           | Value                  |
-| ---------------------------- | ----------------------------------------------------------------------------------------------------- | ---------------------- |
-| `persistence.enabled`        | Enable persistent storage                                                                             | `true`                 |
-| `persistence.create`         | Whether to create the persistentVolumeClaim for shared storage                                        | `true`                 |
-| `persistence.mount`          | Whether the persistentVolumeClaim should be mounted (even if not created)                             | `true`                 |
-| `persistence.claimName`      | Use an existing claim to store repository information                                                 | `gitea-shared-storage` |
-| `persistence.size`           | Size for persistence to store repo information                                                        | `10Gi`                 |
-| `persistence.accessModes`    | AccessMode for persistence                                                                            | `["ReadWriteOnce"]`    |
-| `persistence.labels`         | Labels for the persistence volume claim to be created                                                 | `{}`                   |
-| `persistence.annotations`    | Annotations for the persistence volume claim to be created                                            | `{}`                   |
-| `persistence.storageClass`   | Name of the storage class to use                                                                      | `nil`                  |
-| `persistence.subPath`        | Subdirectory of the volume to mount at                                                                | `nil`                  |
-| `persistence.volumeName`     | Name of persistent volume in PVC                                                                      | `""`                   |
-| `extraVolumes`               | Additional volumes to mount to the Gitea deployment                                                   | `[]`                   |
-| `extraContainerVolumeMounts` | Mounts that are only mapped into the Gitea runtime/main container, to e.g. override custom templates. | `[]`                   |
-| `extraInitVolumeMounts`      | Mounts that are only mapped into the init-containers. Can be used for additional preconfiguration.    | `[]`                   |
-| `extraVolumeMounts`          | **DEPRECATED** Additional volume mounts for init containers and the Gitea main container              | `[]`                   |
+| Name                                              | Description                                                                                           | Value                  |
+| ------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ---------------------- |
+| `persistence.enabled`                             | Enable persistent storage                                                                             | `true`                 |
+| `persistence.create`                              | Whether to create the persistentVolumeClaim for shared storage                                        | `true`                 |
+| `persistence.mount`                               | Whether the persistentVolumeClaim should be mounted (even if not created)                             | `true`                 |
+| `persistence.claimName`                           | Use an existing claim to store repository information                                                 | `gitea-shared-storage` |
+| `persistence.size`                                | Size for persistence to store repo information                                                        | `10Gi`                 |
+| `persistence.accessModes`                         | AccessMode for persistence                                                                            | `["ReadWriteOnce"]`    |
+| `persistence.labels`                              | Labels for the persistence volume claim to be created                                                 | `{}`                   |
+| `persistence.annotations.helm.sh/resource-policy` | Resource policy for the persistence volume claim                                                      | `keep`                 |
+| `persistence.storageClass`                        | Name of the storage class to use                                                                      | `nil`                  |
+| `persistence.subPath`                             | Subdirectory of the volume to mount at                                                                | `nil`                  |
+| `persistence.volumeName`                          | Name of persistent volume in PVC                                                                      | `""`                   |
+| `extraVolumes`                                    | Additional volumes to mount to the Gitea deployment                                                   | `[]`                   |
+| `extraContainerVolumeMounts`                      | Mounts that are only mapped into the Gitea runtime/main container, to e.g. override custom templates. | `[]`                   |
+| `extraInitVolumeMounts`                           | Mounts that are only mapped into the init-containers. Can be used for additional preconfiguration.    | `[]`                   |
+| `extraVolumeMounts`                               | **DEPRECATED** Additional volume mounts for init containers and the Gitea main container              | `[]`                   |
 
 ### Init
 
@@ -835,23 +835,24 @@ kubectl create secret generic gitea-themes --from-file={{FULL-PATH-TO-CSS}} --na
 
 ### redis-cluster
 
-| Name                                  | Description                                          | Value   |
-| ------------------------------------- | ---------------------------------------------------- | ------- |
-| `redis-cluster.enabled`               | Enable redis                                         | `true`  |
-| `redis-cluster.global.redis.password` | Password for the "Gitea" user (overrides `password`) | `gitea` |
+| Name                        | Description                            | Value   |
+| --------------------------- | -------------------------------------- | ------- |
+| `redis-cluster.enabled`     | Enable redis                           | `true`  |
+| `redis-cluster.usePassword` | Whether to use password authentication | `false` |
 
 ### PostgreSQL-ha
 
-| Name                                               | Description                                                      | Value      |
-| -------------------------------------------------- | ---------------------------------------------------------------- | ---------- |
-| `postgresql-ha.enabled`                            | Enable PostgreSQL-ha                                             | `true`     |
-| `postgresql-ha.global.postgresql.password`         | Password for the `gitea` user (overrides `auth.password`)        | `gitea`    |
-| `postgresql-ha.global.postgresql.database`         | Name for a custom database to create (overrides `auth.database`) | `gitea`    |
-| `postgresql-ha.global.postgresql.username`         | Name for a custom user to create (overrides `auth.username`)     | `gitea`    |
-| `postgresql-ha.global.postgresql.postgresPassword` | Postgres Password                                                | `changeme` |
-| `postgresql-ha.global.postgresql.repmgrPassword`   | Repmgr Password                                                  | `changeme` |
-| `postgresql-ha.service.ports.postgresql`           | PostgreSQL service port (overrides `service.ports.postgresql`)   | `5432`     |
-| `postgresql-ha.primary.persistence.size`           | PVC Storage Request for PostgreSQL-ha volume                     | `10Gi`     |
+| Name                                        | Description                                                      | Value       |
+| ------------------------------------------- | ---------------------------------------------------------------- | ----------- |
+| `postgresql-ha.enabled`                     | Enable PostgreSQL-ha                                             | `true`      |
+| `postgresql-ha.postgresql.password`         | Password for the `gitea` user (overrides `auth.password`)        | `changeme4` |
+| `postgresql-ha.global.postgresql.database`  | Name for a custom database to create (overrides `auth.database`) | `gitea`     |
+| `postgresql-ha.global.postgresql.username`  | Name for a custom user to create (overrides `auth.username`)     | `gitea`     |
+| `postgresql-ha.postgresql.repmgrPassword`   | Repmgr Password                                                  | `changeme2` |
+| `postgresql-ha.postgresql.postgresPassword` | postgres Password                                                | `changeme1` |
+| `postgresql-ha.pgpool.adminPassword`        | pgpool adminPassword                                             | `changeme3` |
+| `postgresql-ha.service.ports.postgresql`    | PostgreSQL service port (overrides `service.ports.postgresql`)   | `5432`      |
+| `postgresql-ha.primary.persistence.size`    | PVC Storage Request for PostgreSQL-ha volume                     | `10Gi`      |
 
 ### PostgreSQL
 
