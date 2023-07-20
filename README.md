@@ -592,6 +592,8 @@ gitea:
 
 Custom themes can be added via k8s secrets and referencing them in `values.yaml`.
 
+The [http provider](https://registry.terraform.io/providers/hashicorp/http/latest/docs/data-sources/http) is useful here.
+
 ```yaml
 extraVolumes:
   - name: gitea-themes
@@ -614,13 +616,37 @@ resource "kubernetes_secret" "gitea-themes" {
   }
 
   data = {
-    "theme-custom.css"      = "${file("FULL-PATH-TO-CSS")}"
-    "theme-custom-dark.css" = "${file("FULL-PATH-TO-CSS")}"
+    "my-theme.css"      = data.http.gitea-theme-light.body
+    "my-theme-dark.css" = data.http.gitea-theme-dark.body
+    "my-theme-auto.css" = data.http.gitea-theme-auto.body
   }
 
   type = "Opaque"
+}
 
-  depends_on = [kubernetes_namespace.gitea]
+
+data "http" "gitea-theme-light" {
+  url = "<raw theme url>"
+
+  request_headers = {
+    Accept = "application/json"
+  }
+}
+
+data "http" "gitea-theme-dark" {
+  url = "<raw theme url>"
+
+  request_headers = {
+    Accept = "application/json"
+  }
+}
+
+data "http" "gitea-theme-auto" {
+  url = "<raw theme url>"
+
+  request_headers = {
+    Accept = "application/json"
+  }
 }
 ```
 
