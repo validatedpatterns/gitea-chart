@@ -7,6 +7,7 @@
 - [High Availability](#high-availability)
 - [Configuration](#configuration)
   - [Default Configuration](#default-configuration)
+  - [Minimal Configuration](#minimal-configuration)
   - [Additional _app.ini_ settings](#additional-appini-settings)
   - [External Database](#external-database)
   - [Ports and external url](#ports-and-external-url)
@@ -165,6 +166,36 @@ The Prometheus `/metrics` endpoint is disabled by default.
 [metrics]
 ENABLED = false
 ```
+
+### Minimal Configuration
+
+For a minimal installation, i.e. without HA dependencies and using the built-in SQLITE DB instead of Postgres, the following configuration can be used:
+
+```yaml
+redis-cluster:
+  enabled: false
+postgresql:
+  enabled: false
+postgresql-ha:
+  enabled: false
+
+persistence:
+  enabled: false
+
+gitea:
+  config:
+    database:
+      DB_TYPE: sqlite3
+    session:
+      PROVIDER: memory
+    cache:
+      ADAPTER: memory
+    queue:
+      TYPE: level
+```
+
+This will result in a single-pod Gitea instance without any dependencies and persistence.
+Do not use this configuration for production use.
 
 ### Additional _app.ini_ settings
 
