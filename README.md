@@ -1010,6 +1010,11 @@ If you are coming from an existing deployment and [#356](https://gitea.com/gitea
 ```
 
 <!-- markdownlint-disable-next-line -->
+**Switch to rootless image by default**
+If you are facing errors like `WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED` due to this automatic transition:
+Have a look at [this discussion](https://gitea.com/gitea/helm-chart/issues/487#issue-220660) and either set `image.rootless: false` or manually update your `~/.ssh/known_hosts` file(s).
+
+<!-- markdownlint-disable-next-line -->
 **Transitioning from a RWO to RWX Persistent Volume**
 
 If you want to switch to a RWX volume and go for HA, you need to
