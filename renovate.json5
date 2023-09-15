@@ -4,10 +4,10 @@
   packageRules: [
     {
       description: "Automerge minor + patch dependency updates weekly",
-      matchManagers: ["helm"],
+      matchManagers: ["helmv3"],
       matchUpdateTypes: ["minor", "patch", "digest"],
       automerge: true,
-      schedule: ["weekly"]
+      "extends": ["schedule:weekly"],
     },
   ],
 }
