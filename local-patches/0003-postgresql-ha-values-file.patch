@@ -1,0 +1,81 @@
+--- gitea/charts/postgresql-ha/values.yaml	2023-11-27 14:02:43.000000000 -0700
++++ ../values.yaml.postgresql-ha	2024-01-09 11:11:45.808599406 -0700
+@@ -225,7 +225,7 @@
+   ##
+   podSecurityContext:
+     enabled: true
+-    fsGroup: 1001
++      #fsGroup: 1001
+   ## Container Security Context
+   ## https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+   ## @param postgresql.containerSecurityContext.enabled Enable container security context
+@@ -245,7 +245,7 @@
+   ##
+   containerSecurityContext:
+     enabled: true
+-    runAsUser: 1001
++      #runAsUser: 1001
+     runAsGroup: 0
+     runAsNonRoot: true
+     readOnlyRootFilesystem: false
+@@ -722,7 +722,7 @@
+   ##
+   podSecurityContext:
+     enabled: true
+-    fsGroup: 1001
++      #fsGroup: 1001
+   ## Container Security Context
+   ## https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+   ## @param witness.containerSecurityContext.enabled Enable container security context
+@@ -742,7 +742,7 @@
+   ##
+   containerSecurityContext:
+     enabled: true
+-    runAsUser: 1001
++      #runAsUser: 1001
+     runAsGroup: 0
+     runAsNonRoot: true
+     readOnlyRootFilesystem: false
+@@ -1208,7 +1208,7 @@
+   ##
+   podSecurityContext:
+     enabled: true
+-    fsGroup: 1001
++      #fsGroup: 1001
+   ## Container Security Context
+   ## https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+   ## @param pgpool.containerSecurityContext.enabled Enable container security context
+@@ -1228,7 +1228,7 @@
+   ##
+   containerSecurityContext:
+     enabled: true
+-    runAsUser: 1001
++      #runAsUser: 1001
+     runAsGroup: 0
+     runAsNonRoot: true
+     readOnlyRootFilesystem: false
+@@ -1589,7 +1589,7 @@
+   ##
+   podSecurityContext:
+     enabled: true
+-    runAsUser: 1001
++      #runAsUser: 1001
+     runAsGroup: 0
+     runAsNonRoot: true
+     seccompProfile:
+@@ -1833,7 +1833,7 @@
+   ## @param volumePermissions.podSecurityContext.seccompProfile.type Set Security Context seccompProfile for the init container volume-permissions container
+   ##
+   podSecurityContext:
+-    runAsUser: 0
++    #runAsUser: 0
+     runAsGroup: 0
+     runAsNonRoot: false
+     seccompProfile:
+@@ -2002,4 +2002,4 @@
+     ##           matchLabels:
+     ##             label: example
+     ##
+-    customRules: []
++    customRules: []
+\ No newline at end of file

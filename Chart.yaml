@@ -1,0 +1,10 @@
+apiVersion: v2
+description: A Helm chart to configure Gitea.
+keywords:
+- pattern
+name: gitea-chart
+version: 0.0.1
+dependencies:
+  - name: gitea
+    version: "9.6.1"
+    repository: "https://dl.gitea.com/charts/"

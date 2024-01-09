@@ -1,0 +1,45 @@
+--- gitea/charts/redis-cluster/values.yaml	2023-11-27 14:02:43.000000000 -0700
++++ ../values.yaml.redis-cluster	2024-01-09 11:13:01.452046392 -0700
+@@ -147,7 +147,7 @@ rbac:
+ ##
+ podSecurityContext:
+   enabled: true
+-  fsGroup: 1001
++    #fsGroup: 1001
+   ## Uncomment the setting below to increase the net.core.somaxconn value
+   ## e.g:
+   ## sysctls:
+@@ -177,7 +177,7 @@ maxUnavailable: ""
+ ##
+ containerSecurityContext:
+   enabled: true
+-  runAsUser: 1001
++    #runAsUser: 1001
+   runAsNonRoot: true
+   privileged: false
+   readOnlyRootFilesystem: false
+@@ -387,7 +387,7 @@ volumePermissions:
+   ##
+   containerSecurityContext:
+     enabled: true
+-    runAsUser: 0
++      #runAsUser: 0
+     privileged: false
+   ## Container resource requests and limits
+   ## ref: https://kubernetes.io/docs/user-guide/compute-resources/
+@@ -1049,7 +1049,7 @@ sysctlImage:
+   ##
+   containerSecurityContext:
+     enabled: true
+-    runAsUser: 0
++      #runAsUser: 0
+     privileged: true
+   ## Container resource requests and limits
+   ## ref: https://kubernetes.io/docs/user-guide/compute-resources/
+@@ -1068,4 +1068,4 @@ sysctlImage:
+     ##    cpu: 100m
+     ##    memory: 128Mi
+     ##
+-    requests: {}
++    requests: {}
+\ No newline at end of file
