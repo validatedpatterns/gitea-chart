@@ -1,0 +1,31 @@
+--- gitea/templates/gitea/deployment.yaml	2023-11-27 14:02:43.000000000 -0700
++++ ../deployment.yaml	2024-01-12 11:51:06.726461981 -0700
+@@ -138,8 +138,8 @@ spec:
+           securityContext:
+             {{- /* By default this container runs as user 1000 unless otherwise stated */ -}}
+             {{- $csc := deepCopy .Values.containerSecurityContext -}}
+-            {{- if not (hasKey $csc "runAsUser") -}}
+-            {{- $_ := set $csc "runAsUser" 1000 -}}
++            {{- if and (not (hasKey $csc "runAsUser")) (eq .Values.global.openshift.enable false ) -}}
++            {{- $_ := set $csc "runAsUser" 0 -}}
+             {{- end -}}
+             {{- toYaml $csc | nindent 12 }}
+           env:
+@@ -169,8 +169,8 @@ spec:
+           securityContext:
+             {{- /* By default this container runs as user 1000 unless otherwise stated */ -}}
+             {{- $csc := deepCopy .Values.containerSecurityContext -}}
+-            {{- if not (hasKey $csc "runAsUser") -}}
+-            {{- $_ := set $csc "runAsUser" 1000 -}}
++            {{- if and (not (hasKey $csc "runAsUser")) (eq .Values.global.openshift.enable false ) -}}
++            {{- $_ := set $csc "runAsUser" 0 -}}
+             {{- end -}}
+             {{- toYaml $csc | nindent 12 }}
+           env:
+@@ -397,4 +397,4 @@ spec:
+   {{- else if not .Values.persistence.enabled }}
+         - name: data
+           emptyDir: {}
+-  {{- end }}
++  {{- end }}
+\ No newline at end of file
