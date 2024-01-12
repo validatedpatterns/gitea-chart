@@ -3,7 +3,7 @@ description: A Helm chart to configure Gitea.
 keywords:
 - pattern
 name: gitea-chart
-version: 0.0.1
+version: 0.0.2
 dependencies:
   - name: gitea
     version: "9.6.1"
