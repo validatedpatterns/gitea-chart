@@ -1,5 +1,5 @@
 --- gitea/values.yaml	2023-11-27 14:02:43.000000000 -0700
-+++ ../values.yaml	2024-01-26 16:23:50.011235718 -0700
++++ ../values.yaml	2024-01-27 10:53:05.598524048 -0700
 @@ -16,6 +16,10 @@ global:
    imagePullSecrets: []
    storageClass: ""
@@ -65,15 +65,6 @@
      loadBalancerIP:
      nodePort:
      externalTrafficPolicy:
-@@ -342,7 +346,7 @@ gitea:
-     # existingSecret: gitea-admin-secret
-     existingSecret:
-     username: gitea_admin
--    password: r8sA8CPHD9!bt6d
-+    #password: r8sA8CPHD9!bt6d
-     email: "gitea@local.domain"
- 
-   ## @param gitea.metrics.enabled Enable Gitea metrics
 @@ -506,7 +510,7 @@ postgresql-ha:
        database: gitea
        password: gitea
