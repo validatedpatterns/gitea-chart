@@ -1,5 +1,5 @@
 --- gitea/values.yaml	2023-11-27 14:02:43.000000000 -0700
-+++ ../values.yaml	2024-01-09 10:32:33.637738201 -0700
++++ ../values.yaml	2024-01-26 16:23:50.011235718 -0700
 @@ -16,6 +16,10 @@ global:
    imagePullSecrets: []
    storageClass: ""
@@ -11,7 +11,7 @@
    # - ip: 192.168.137.2
    #   hostnames:
    #   - example.com
-@@ -60,12 +64,12 @@ imagePullSecrets: []
+@@ -60,15 +64,15 @@ imagePullSecrets: []
  ## @section Security
  # Security context is only usable with rootless image due to image design
  ## @param podSecurityContext.fsGroup Set the shared file system group for all containers in the pod.
@@ -23,11 +23,17 @@
  ## @param containerSecurityContext Security context
 -containerSecurityContext: {}
 -#   allowPrivilegeEscalation: false
+-#   capabilities:
+-#     drop:
+-#       - ALL
 +containerSecurityContext: 
 +  allowPrivilegeEscalation: false
- #   capabilities:
- #     drop:
- #       - ALL
++  capabilities:
++    drop:
++      - ALL
+ #   # Add the SYS_CHROOT capability for root and rootless images if you intend to
+ #   # run pods on nodes that use the container runtime cri-o. Otherwise, you will
+ #   # get an error message from the SSH server that it is not possible to read from
 @@ -76,10 +80,10 @@ containerSecurityContext: {}
  #   # https://gitea.com/gitea/helm-chart/issues/161
  #     add:
@@ -59,6 +65,15 @@
      loadBalancerIP:
      nodePort:
      externalTrafficPolicy:
+@@ -342,7 +346,7 @@ gitea:
+     # existingSecret: gitea-admin-secret
+     existingSecret:
+     username: gitea_admin
+-    password: r8sA8CPHD9!bt6d
++    #password: r8sA8CPHD9!bt6d
+     email: "gitea@local.domain"
+ 
+   ## @param gitea.metrics.enabled Enable Gitea metrics
 @@ -506,7 +510,7 @@ postgresql-ha:
        database: gitea
        password: gitea
@@ -77,10 +92,3 @@
    global:
      postgresql:
        auth:
-@@ -559,4 +563,4 @@ test:
- 
- ## @param extraDeploy Array of extra objects to deploy with the release
- ##
--extraDeploy: []
-+extraDeploy: []
-\ No newline at end of file
