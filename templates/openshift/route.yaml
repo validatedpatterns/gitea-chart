@@ -2,16 +2,7 @@
 apiVersion: route.openshift.io/v1
 kind: Route
 metadata:
-  #  name: gitea
-  #namespace: gitea
   name: gitea-route
-  labels:
-    {{- include "gitea.labels" . | nindent 4 }}
-  annotations:
-    {{- range $key, $value := .Values.ingress.annotations }}
-      {{ $key }}: {{ $value | quote }}
-    {{- end }}
-
 spec:
   subdomain: {{ .Values.global.openshift.route.hostname }}
   port:
