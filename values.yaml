@@ -61,10 +61,12 @@ imagePullSecrets: []
 # Security context is only usable with rootless image due to image design
 ## @param podSecurityContext.fsGroup Set the shared file system group for all containers in the pod.
 podSecurityContext:
-  fsGroup: 1000
+  fsGroup: null
 
 ## @param containerSecurityContext Security context
-containerSecurityContext: {}
+containerSecurityContext:
+  runAsUser: null
+  seLinuxOptions: null
 #   allowPrivilegeEscalation: false
 #   capabilities:
 #     drop:
@@ -399,6 +401,15 @@ gitea:
     server:
       SSH_PORT: 22 # rootful image
       SSH_LISTEN_PORT: 2222 # rootless image
+    database:
+      DB_TYPE: sqlite3
+    session:
+      PROVIDER: db
+    cache:
+      ADAPTER: memory
+    queue:
+      TYPE: level
+
   #
   #  security:
   #    PASSWORD_COMPLEXITY: spec
@@ -486,13 +497,14 @@ gitea:
 ## @param redis-cluster.cluster.nodes Number of redis cluster master nodes
 ## @param redis-cluster.cluster.replicas Number of redis cluster master node replicas
 redis-cluster:
-  enabled: true
+  enabled: false
   usePassword: false
   cluster:
     nodes: 3 # default: 6
     replicas: 0 # default: 1
 
-## @section PostgreSQL HA
+
+## @section postgresql-ha
 #
 ## @param postgresql-ha.enabled Enable PostgreSQL HA
 ## @param postgresql-ha.postgresql.password Password for the `gitea` user (overrides `auth.password`)
@@ -510,7 +522,7 @@ postgresql-ha:
       database: gitea
       password: gitea
       username: gitea
-  enabled: true
+  enabled: false
   postgresql:
     repmgrPassword: changeme2
     postgresPassword: changeme1
