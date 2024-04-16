@@ -30,7 +30,7 @@ jobs:
           chmod a+r /etc/apt/keyrings/docker.gpg
           echo "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
           apt update -y
-          apt install -y python3 helm=${{ env.HELM_VERSION }}-1 python3-pip apt-transport-https docker-ce-cli
+          apt install -y python3 python3-pip apt-transport-https docker-ce-cli
           pip install awscli
 
       - name: Import GPG key
