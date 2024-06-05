@@ -1,4 +1,6 @@
-charts/
+# In VP we actually ship the subcharts, so the helm-charts publish-chart
+# job can package the whole thing
+#charts/
 node_modules/
 .DS_Store
 unittests/*/__snapshot__/
