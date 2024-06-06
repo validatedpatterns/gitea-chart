@@ -74,7 +74,7 @@ imagePullSecrets:
 Storage Class
 */}}
 {{- define "gitea.persistence.storageClass" -}}
-{{- $storageClass := .Values.persistence.storageClass | default .Values.global.storageClass }}
+{{- $storageClass :=  (tpl ( default "" .Values.persistence.storageClass) .) | default (tpl ( default "" .Values.global.storageClass) .) }}
 {{- if $storageClass }}
 storageClassName: {{ $storageClass | quote }}
 {{- end }}
