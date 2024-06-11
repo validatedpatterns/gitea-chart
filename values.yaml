@@ -342,7 +342,7 @@ signing:
 gitea:
   ## @param gitea.console.domain Domain to be used to build the consolelink
   console:
-    domain: foo.bar
+    href: https://foo.bar
   ## @param gitea.admin.username Username for the Gitea admin user
   ## @param gitea.admin.existingSecret Use an existing secret to store admin user credentials
   ## @param gitea.admin.password Password for the Gitea admin user

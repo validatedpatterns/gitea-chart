@@ -1,11 +1,11 @@
-{{- if .Values.gitea.console.domain }}
+{{- if .Values.gitea.console.href }}
 apiVersion: console.openshift.io/v1
 kind: ConsoleLink
 metadata:
   name: gitea-link
   namespace: vp-gitea
 spec:
-  href: 'https://gitea-route-vp-gitea.{{ .Values.gitea.console.domain }}'
+  href: '{{ .Values.gitea.console.href }}'
   location: ApplicationMenu
   text: 'In-Cluster Gitea'
   applicationMenu:
