@@ -2,7 +2,7 @@ apiVersion: v2
 name: gitea
 description: Gitea Helm chart for Kubernetes adapted for VP
 type: application
-version: 0.0.1
+version: 0.0.2
 appVersion: 1.21.11
 icon: https://gitea.com/assets/img/logo.svg
 
