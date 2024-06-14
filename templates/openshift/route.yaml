@@ -10,4 +10,4 @@ spec:
     termination: edge
   to:
     kind: Service
-    name: gitea-http
+    name: gitea-in-cluster-http
