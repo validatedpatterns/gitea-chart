@@ -569,6 +569,20 @@ gitea:
     existingSecret: gitea-admin-secret
 ```
 
+Whether you use the existing Secret or specify a user name and password, there are three modes for how the admin user password is created or set.
+
+- `keepUpdated` (the default) will set the admin user password, and reset it to the defined value every time the pod is recreated.
+- `initialOnlyNoReset` will set the admin user password when creating it, but never try to update the password.
+- `initialOnlyRequireReset` will set the admin user password when creating it, never update it, and require that the password be changed at the initial login.
+
+These modes can be set like the following:
+
+```yaml
+gitea:
+  admin:
+    passwordMode: initialOnlyRequireReset
+```
+
 ### LDAP Settings
 
 Like the admin user the LDAP settings can be updated.
@@ -985,22 +999,23 @@ To comply with the Gitea helm chart definition of the digest parameter, a "custo
 
 ### Gitea
 
-| Name                                   | Description                                                               | Value                |
-| -------------------------------------- | ------------------------------------------------------------------------- | -------------------- |
-| `gitea.admin.username`                 | Username for the Gitea admin user                                         | `gitea_admin`        |
-| `gitea.admin.existingSecret`           | Use an existing secret to store admin user credentials                    | `nil`                |
-| `gitea.admin.password`                 | Password for the Gitea admin user                                         | `r8sA8CPHD9!bt6d`    |
-| `gitea.admin.email`                    | Email for the Gitea admin user                                            | `gitea@local.domain` |
-| `gitea.metrics.enabled`                | Enable Gitea metrics                                                      | `false`              |
-| `gitea.metrics.serviceMonitor.enabled` | Enable Gitea metrics service monitor                                      | `false`              |
-| `gitea.ldap`                           | LDAP configuration                                                        | `[]`                 |
-| `gitea.oauth`                          | OAuth configuration                                                       | `[]`                 |
-| `gitea.config.server.SSH_PORT`         | SSH port for rootlful Gitea image                                         | `22`                 |
-| `gitea.config.server.SSH_LISTEN_PORT`  | SSH port for rootless Gitea image                                         | `2222`               |
-| `gitea.additionalConfigSources`        | Additional configuration from secret or configmap                         | `[]`                 |
-| `gitea.additionalConfigFromEnvs`       | Additional configuration sources from environment variables               | `[]`                 |
-| `gitea.podAnnotations`                 | Annotations for the Gitea pod                                             | `{}`                 |
-| `gitea.ssh.logLevel`                   | Configure OpenSSH's log level. Only available for root-based Gitea image. | `INFO`               |
+| Name                                   | Description                                                                                                                   | Value                |
+| -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | -------------------- |
+| `gitea.admin.username`                 | Username for the Gitea admin user                                                                                             | `gitea_admin`        |
+| `gitea.admin.existingSecret`           | Use an existing secret to store admin user credentials                                                                        | `nil`                |
+| `gitea.admin.password`                 | Password for the Gitea admin user                                                                                             | `r8sA8CPHD9!bt6d`    |
+| `gitea.admin.email`                    | Email for the Gitea admin user                                                                                                | `gitea@local.domain` |
+| `gitea.admin.passwordMode`             | Mode for how to set/update the admin user password. Options are: initialOnlyNoReset, initialOnlyRequireReset, and keepUpdated | `keepUpdated`        |
+| `gitea.metrics.enabled`                | Enable Gitea metrics                                                                                                          | `false`              |
+| `gitea.metrics.serviceMonitor.enabled` | Enable Gitea metrics service monitor                                                                                          | `false`              |
+| `gitea.ldap`                           | LDAP configuration                                                                                                            | `[]`                 |
+| `gitea.oauth`                          | OAuth configuration                                                                                                           | `[]`                 |
+| `gitea.config.server.SSH_PORT`         | SSH port for rootlful Gitea image                                                                                             | `22`                 |
+| `gitea.config.server.SSH_LISTEN_PORT`  | SSH port for rootless Gitea image                                                                                             | `2222`               |
+| `gitea.additionalConfigSources`        | Additional configuration from secret or configmap                                                                             | `[]`                 |
+| `gitea.additionalConfigFromEnvs`       | Additional configuration sources from environment variables                                                                   | `[]`                 |
+| `gitea.podAnnotations`                 | Annotations for the Gitea pod                                                                                                 | `{}`                 |
+| `gitea.ssh.logLevel`                   | Configure OpenSSH's log level. Only available for root-based Gitea image.                                                     | `INFO`               |
 
 ### LivenessProbe
 
