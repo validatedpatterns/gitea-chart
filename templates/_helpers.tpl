@@ -26,6 +26,13 @@ If release name contains chart name it will be used as a full name.
 {{- end -}}
 
 {{/*
+Create a default worker name.
+*/}}
+{{- define "gitea.workername" -}}
+{{- printf "%s-%s" .global.Release.Name .worker | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+{{/*
 Create chart name and version as used by the chart label.
 */}}
 {{- define "gitea.chart" -}}
@@ -92,11 +99,25 @@ version: {{ .Values.image.tag | default .Chart.AppVersion | quote }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end -}}
 
+{{- define "gitea.labels.actRunner" -}}
+helm.sh/chart: {{ include "gitea.chart" . }}
+app: {{ include "gitea.name" . }}-act-runner
+{{ include "gitea.selectorLabels.actRunner" . }}
+app.kubernetes.io/version: {{ .Values.image.tag | default .Chart.AppVersion | quote }}
+version: {{ .Values.image.tag | default .Chart.AppVersion | quote }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- end -}}
+
 {{/*
 Selector labels
 */}}
 {{- define "gitea.selectorLabels" -}}
 app.kubernetes.io/name: {{ include "gitea.name" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end -}}
+
+{{- define "gitea.selectorLabels.actRunner" -}}
+app.kubernetes.io/name: {{ include "gitea.name" . }}-act-runner
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end -}}
 
@@ -199,6 +220,15 @@ https
 {{- end -}}
 {{- end -}}
 
+{{- define "gitea.act_runner.local_root_url" -}}
+{{- if not .Values.gitea.config.server.LOCAL_ROOT_URL -}}
+    {{- printf "http://%s-http:%.0f" (include "gitea.fullname" .) .Values.service.http.port -}}
+{{- else -}}
+  {{/* fallback for allowing to overwrite this value via inline config */}}
+  {{- .Values.gitea.config.server.LOCAL_ROOT_URL -}}
+{{- end -}}
+{{- end -}}
+
 {{- define "gitea.inline_configuration" -}}
   {{- include "gitea.inline_configuration.init" . -}}
   {{- include "gitea.inline_configuration.defaults" . -}}
@@ -263,6 +293,9 @@ https
   {{- if not (hasKey .Values.gitea.config "indexer") -}}
     {{- $_ := set .Values.gitea.config "indexer" dict -}}
   {{- end -}}
+  {{- if not (hasKey .Values.gitea.config "actions") -}}
+    {{- $_ := set .Values.gitea.config "actions" dict -}}
+  {{- end -}}
 {{- end -}}
 
 {{- define "gitea.inline_configuration.defaults" -}}
@@ -309,6 +342,9 @@ https
   {{- if not .Values.gitea.config.indexer.ISSUE_INDEXER_TYPE -}}
      {{- $_ := set .Values.gitea.config.indexer "ISSUE_INDEXER_TYPE" "db" -}}
   {{- end -}}
+  {{- if not .Values.gitea.config.actions.ENABLED -}}
+     {{- $_ := set .Values.gitea.config.actions "ENABLED" (ternary "true" "false" .Values.actions.enabled) -}}
+  {{- end -}}
 {{- end -}}
 
 {{- define "gitea.inline_configuration.defaults.server" -}}
@@ -327,6 +363,9 @@ https
   {{- end -}}
   {{- if not .Values.gitea.config.server.ROOT_URL -}}
     {{- $_ := set .Values.gitea.config.server "ROOT_URL" (printf "%s://%s" (include "gitea.public_protocol" .) .Values.gitea.config.server.DOMAIN) -}}
+  {{- end -}}
+  {{- if .Values.actions.enabled -}}
+     {{- $_ := set .Values.gitea.config.server "LOCAL_ROOT_URL" (include "gitea.act_runner.local_root_url" .) -}}
   {{- end -}}
   {{- if not .Values.gitea.config.server.SSH_DOMAIN -}}
     {{- $_ := set .Values.gitea.config.server "SSH_DOMAIN" .Values.gitea.config.server.DOMAIN -}}
