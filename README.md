@@ -30,6 +30,7 @@
   - [OAuth2 Settings](#oauth2-settings)
 - [Configure commit signing](#configure-commit-signing)
 - [Metrics and profiling](#metrics-and-profiling)
+  - [Secure Metrics Endpoint](#secure-metrics-endpoint)
 - [Pod annotations](#pod-annotations)
 - [Themes](#themes)
 - [Renovate](#renovate)
@@ -45,11 +46,13 @@
   - [Persistence](#persistence-1)
   - [Init](#init)
   - [Signing](#signing)
+  - [Gitea Actions](#gitea-actions)
   - [Gitea](#gitea)
   - [LivenessProbe](#livenessprobe)
   - [ReadinessProbe](#readinessprobe)
   - [StartupProbe](#startupprobe)
   - [redis-cluster](#redis-cluster)
+  - [redis](#redis)
   - [PostgreSQL HA](#postgresql-ha)
   - [PostgreSQL](#postgresql)
   - [Advanced](#advanced)
@@ -98,7 +101,8 @@ These dependencies are enabled by default:
 
 Alternatively, the following non-HA replacements are available:
 
-- PostgreSQL ([Bitnami PostgreSQL](postgresql](https://github.com/bitnami/charts/blob/main/bitnami/postgresql/Chart.yaml)))
+- PostgreSQL ([Bitnami PostgreSQL](<Postgresql](https://github.com/bitnami/charts/blob/main/bitnami/postgresql/Chart.yaml)>))
+- Redis ([Bitnami Redis](<Redis](https://github.com/bitnami/charts/blob/main/bitnami/redis/Chart.yaml)>))
 
 ### Dependency Versioning
 
@@ -117,6 +121,7 @@ Please double-check the image repository and available tags in the sub-chart:
 - [PostgreSQL-HA](https://hub.docker.com/r/bitnami/postgresql-repmgr/tags)
 - [PostgreSQL](https://hub.docker.com/r/bitnami/postgresql/tags)
 - [Redis Cluster](https://hub.docker.com/r/bitnami/redis-cluster/tags)
+- [Redis](https://hub.docker.com/r/bitnami/redis/tags)
 
 and look up the image tag which fits your needs on Dockerhub.
 
@@ -244,7 +249,7 @@ External tools such as `redis-cluster` or `memcached` handle these workloads muc
 
 If HA is not needed/desired, the following configurations can be used to deploy a single-pod Gitea instance.
 
-1. For a production-ready single-pod Gitea instance without external dependencies (using the chart dependency `postgresql`):
+1. For a production-ready single-pod Gitea instance without external dependencies (using the chart dependency `postgresql` and `redis`):
 
    <details>
 
@@ -253,6 +258,8 @@ If HA is not needed/desired, the following configurations can be used to deploy 
    ```yaml
    redis-cluster:
      enabled: false
+   redis:
+     enabled: true
    postgresql:
      enabled: true
    postgresql-ha:
@@ -265,12 +272,6 @@ If HA is not needed/desired, the following configurations can be used to deploy 
      config:
        database:
          DB_TYPE: postgres
-       session:
-         PROVIDER: db
-       cache:
-         ADAPTER: memory
-       queue:
-         TYPE: level
        indexer:
          ISSUE_INDEXER_TYPE: bleve
          REPO_INDEXER_ENABLED: true
@@ -289,6 +290,8 @@ If HA is not needed/desired, the following configurations can be used to deploy 
 
    ```yaml
    redis-cluster:
+     enabled: false
+   redis:
      enabled: false
    postgresql:
      enabled: false
@@ -419,6 +422,9 @@ gitea:
 
 postgresql:
   enabled: false
+
+postgresql-ha:
+  enabled: false
 ```
 
 ### Ports and external url
@@ -497,6 +503,9 @@ redis-cluster:
   enabled: true
 ```
 
+⚠️ The redis charts [do not work well with special characters in the password](https://gitea.com/gitea/helm-chart/issues/690).
+Consider omitting such or open an issue in the Bitnami repo and let us know once this got fixed.
+
 ### Persistence
 
 Gitea will be deployed as a deployment.
@@ -566,6 +575,20 @@ stringData:
 gitea:
   admin:
     existingSecret: gitea-admin-secret
+```
+
+Whether you use the existing Secret or specify a user name and password, there are three modes for how the admin user password is created or set.
+
+- `keepUpdated` (the default) will set the admin user password, and reset it to the defined value every time the pod is recreated.
+- `initialOnlyNoReset` will set the admin user password when creating it, but never try to update the password.
+- `initialOnlyRequireReset` will set the admin user password when creating it, never update it, and require that the password be changed at the initial login.
+
+These modes can be set like the following:
+
+```yaml
+gitea:
+  admin:
+    passwordMode: initialOnlyRequireReset
 ```
 
 ### LDAP Settings
@@ -725,6 +748,21 @@ gitea:
       ENABLE_PPROF: true
 ```
 
+### Secure Metrics Endpoint
+
+Metrics endpoint `/metrics` can be secured by using `Bearer` token authentication.
+
+**Note:** Providing non-empty `TOKEN` value will also require authentication for `ServiceMonitor`.
+
+```yaml
+gitea:
+  metrics:
+    token: "secure-token"
+    enabled: true
+    serviceMonitor:
+      enabled: true
+```
+
 ## Pod annotations
 
 Annotations can be added to the Gitea pod.
@@ -834,13 +872,14 @@ To comply with the Gitea helm chart definition of the digest parameter, a "custo
 
 ### Global
 
-| Name                      | Description                                                               | Value |
-| ------------------------- | ------------------------------------------------------------------------- | ----- |
-| `global.imageRegistry`    | global image registry override                                            | `""`  |
-| `global.imagePullSecrets` | global image pull secrets override; can be extended by `imagePullSecrets` | `[]`  |
-| `global.storageClass`     | global storage class override                                             | `""`  |
-| `global.hostAliases`      | global hostAliases which will be added to the pod's hosts files           | `[]`  |
-| `replicaCount`            | number of replicas for the deployment                                     | `1`   |
+| Name                      | Description                                                                                    | Value |
+| ------------------------- | ---------------------------------------------------------------------------------------------- | ----- |
+| `global.imageRegistry`    | global image registry override                                                                 | `""`  |
+| `global.imagePullSecrets` | global image pull secrets override; can be extended by `imagePullSecrets`                      | `[]`  |
+| `global.storageClass`     | global storage class override                                                                  | `""`  |
+| `global.hostAliases`      | global hostAliases which will be added to the pod's hosts files                                | `[]`  |
+| `namespace`               | An explicit namespace to deploy Gitea into. Defaults to the release namespace if not specified | `""`  |
+| `replicaCount`            | number of replicas for the deployment                                                          | `1`   |
 
 ### strategy
 
@@ -889,6 +928,7 @@ To comply with the Gitea helm chart definition of the digest parameter, a "custo
 | `service.http.loadBalancerSourceRanges` | Source range filter for http loadbalancer                                                                                                                                                            | `[]`        |
 | `service.http.annotations`              | HTTP service annotations                                                                                                                                                                             | `{}`        |
 | `service.http.labels`                   | HTTP service additional labels                                                                                                                                                                       | `{}`        |
+| `service.http.loadBalancerClass`        | Loadbalancer class                                                                                                                                                                                   | `nil`       |
 | `service.ssh.type`                      | Kubernetes service type for ssh traffic                                                                                                                                                              | `ClusterIP` |
 | `service.ssh.port`                      | Port number for ssh traffic                                                                                                                                                                          | `22`        |
 | `service.ssh.clusterIP`                 | ClusterIP setting for ssh autosetup for deployment is None                                                                                                                                           | `None`      |
@@ -902,6 +942,7 @@ To comply with the Gitea helm chart definition of the digest parameter, a "custo
 | `service.ssh.loadBalancerSourceRanges`  | Source range filter for ssh loadbalancer                                                                                                                                                             | `[]`        |
 | `service.ssh.annotations`               | SSH service annotations                                                                                                                                                                              | `{}`        |
 | `service.ssh.labels`                    | SSH service additional labels                                                                                                                                                                        | `{}`        |
+| `service.ssh.loadBalancerClass`         | Loadbalancer class                                                                                                                                                                                   | `nil`       |
 
 ### Ingress
 
@@ -959,6 +1000,7 @@ To comply with the Gitea helm chart definition of the digest parameter, a "custo
 | `persistence.storageClass`                        | Name of the storage class to use                                                                      | `nil`                  |
 | `persistence.subPath`                             | Subdirectory of the volume to mount at                                                                | `nil`                  |
 | `persistence.volumeName`                          | Name of persistent volume in PVC                                                                      | `""`                   |
+| `extraContainers`                                 | Additional sidecar containers to run in the pod                                                       | `[]`                   |
 | `extraVolumes`                                    | Additional volumes to mount to the Gitea deployment                                                   | `[]`                   |
 | `extraContainerVolumeMounts`                      | Mounts that are only mapped into the Gitea runtime/main container, to e.g. override custom templates. | `[]`                   |
 | `extraInitVolumeMounts`                           | Mounts that are only mapped into the init-containers. Can be used for additional preconfiguration.    | `[]`                   |
@@ -982,24 +1024,66 @@ To comply with the Gitea helm chart definition of the digest parameter, a "custo
 | `signing.privateKey`     | Inline private gpg key for signed internal Git activity           | `""`               |
 | `signing.existingSecret` | Use an existing secret to store the value of `signing.privateKey` | `""`               |
 
+### Gitea Actions
+
+| Name                                           | Description                                                                                                                                 | Value                          |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
+| `actions.enabled`                              | Create an act runner StatefulSet.                                                                                                           | `false`                        |
+| `actions.init.image.repository`                | The image used for the init containers                                                                                                      | `busybox`                      |
+| `actions.init.image.tag`                       | The image tag used for the init containers                                                                                                  | `1.37.0`                       |
+| `actions.statefulset.annotations`              | Act runner annotations                                                                                                                      | `{}`                           |
+| `actions.statefulset.labels`                   | Act runner labels                                                                                                                           | `{}`                           |
+| `actions.statefulset.resources`                | Act runner resources                                                                                                                        | `{}`                           |
+| `actions.statefulset.nodeSelector`             | NodeSelector for the statefulset                                                                                                            | `{}`                           |
+| `actions.statefulset.tolerations`              | Tolerations for the statefulset                                                                                                             | `[]`                           |
+| `actions.statefulset.affinity`                 | Affinity for the statefulset                                                                                                                | `{}`                           |
+| `actions.statefulset.actRunner.repository`     | The Gitea act runner image                                                                                                                  | `gitea/act_runner`             |
+| `actions.statefulset.actRunner.tag`            | The Gitea act runner tag                                                                                                                    | `0.2.11`                       |
+| `actions.statefulset.actRunner.pullPolicy`     | The Gitea act runner pullPolicy                                                                                                             | `IfNotPresent`                 |
+| `actions.statefulset.actRunner.config`         | Act runner custom configuration. See [Act Runner documentation](https://docs.gitea.com/usage/actions/act-runner#configuration) for details. | `Too complex. See values.yaml` |
+| `actions.statefulset.dind.repository`          | The Docker-in-Docker image                                                                                                                  | `docker`                       |
+| `actions.statefulset.dind.tag`                 | The Docker-in-Docker image tag                                                                                                              | `25.0.2-dind`                  |
+| `actions.statefulset.dind.pullPolicy`          | The Docker-in-Docker pullPolicy                                                                                                             | `IfNotPresent`                 |
+| `actions.statefulset.dind.extraEnvs`           | Allows adding custom environment variables, such as `DOCKER_IPTABLES_LEGACY`                                                                | `[]`                           |
+| `actions.provisioning.enabled`                 | Create a job that will create and save the token in a Kubernetes Secret                                                                     | `false`                        |
+| `actions.provisioning.annotations`             | Job's annotations                                                                                                                           | `{}`                           |
+| `actions.provisioning.labels`                  | Job's labels                                                                                                                                | `{}`                           |
+| `actions.provisioning.resources`               | Job's resources                                                                                                                             | `{}`                           |
+| `actions.provisioning.nodeSelector`            | NodeSelector for the job                                                                                                                    | `{}`                           |
+| `actions.provisioning.tolerations`             | Tolerations for the job                                                                                                                     | `[]`                           |
+| `actions.provisioning.affinity`                | Affinity for the job                                                                                                                        | `{}`                           |
+| `actions.provisioning.ttlSecondsAfterFinished` | ttl for the job after finished in order to allow helm to properly recognize that the job completed                                          | `300`                          |
+| `actions.provisioning.publish.repository`      | The image that can create the secret via kubectl                                                                                            | `bitnami/kubectl`              |
+| `actions.provisioning.publish.tag`             | The publish image tag that can create the secret                                                                                            | `1.29.0`                       |
+| `actions.provisioning.publish.pullPolicy`      | The publish image pullPolicy that can create the secret                                                                                     | `IfNotPresent`                 |
+| `actions.existingSecret`                       | Secret that contains the token                                                                                                              | `""`                           |
+| `actions.existingSecretKey`                    | Secret key                                                                                                                                  | `""`                           |
+
 ### Gitea
 
-| Name                                   | Description                                                               | Value                |
-| -------------------------------------- | ------------------------------------------------------------------------- | -------------------- |
-| `gitea.admin.username`                 | Username for the Gitea admin user                                         | `gitea_admin`        |
-| `gitea.admin.existingSecret`           | Use an existing secret to store admin user credentials                    | `nil`                |
-| `gitea.admin.password`                 | Password for the Gitea admin user                                         | `r8sA8CPHD9!bt6d`    |
-| `gitea.admin.email`                    | Email for the Gitea admin user                                            | `gitea@local.domain` |
-| `gitea.metrics.enabled`                | Enable Gitea metrics                                                      | `false`              |
-| `gitea.metrics.serviceMonitor.enabled` | Enable Gitea metrics service monitor                                      | `false`              |
-| `gitea.ldap`                           | LDAP configuration                                                        | `[]`                 |
-| `gitea.oauth`                          | OAuth configuration                                                       | `[]`                 |
-| `gitea.config.server.SSH_PORT`         | SSH port for rootlful Gitea image                                         | `22`                 |
-| `gitea.config.server.SSH_LISTEN_PORT`  | SSH port for rootless Gitea image                                         | `2222`               |
-| `gitea.additionalConfigSources`        | Additional configuration from secret or configmap                         | `[]`                 |
-| `gitea.additionalConfigFromEnvs`       | Additional configuration sources from environment variables               | `[]`                 |
-| `gitea.podAnnotations`                 | Annotations for the Gitea pod                                             | `{}`                 |
-| `gitea.ssh.logLevel`                   | Configure OpenSSH's log level. Only available for root-based Gitea image. | `INFO`               |
+| Name                                         | Description                                                                                                                    | Value                |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | -------------------- |
+| `gitea.admin.username`                       | Username for the Gitea admin user                                                                                              | `gitea_admin`        |
+| `gitea.admin.existingSecret`                 | Use an existing secret to store admin user credentials                                                                         | `nil`                |
+| `gitea.admin.password`                       | Password for the Gitea admin user                                                                                              | `r8sA8CPHD9!bt6d`    |
+| `gitea.admin.email`                          | Email for the Gitea admin user                                                                                                 | `gitea@local.domain` |
+| `gitea.admin.passwordMode`                   | Mode for how to set/update the admin user password. Options are: initialOnlyNoReset, initialOnlyRequireReset, and keepUpdated  | `keepUpdated`        |
+| `gitea.metrics.enabled`                      | Enable Gitea metrics                                                                                                           | `false`              |
+| `gitea.metrics.token`                        | used for `bearer` token authentication on metrics endpoint. If not specified or empty metrics endpoint is public.              | `nil`                |
+| `gitea.metrics.serviceMonitor.enabled`       | Enable Gitea metrics service monitor. Requires, that `gitea.metrics.enabled` is also set to true, to enable metrics generally. | `false`              |
+| `gitea.metrics.serviceMonitor.interval`      | Interval at which metrics should be scraped. If not specified Prometheus' global scrape interval is used.                      | `""`                 |
+| `gitea.metrics.serviceMonitor.relabelings`   | RelabelConfigs to apply to samples before scraping.                                                                            | `[]`                 |
+| `gitea.metrics.serviceMonitor.scheme`        | HTTP scheme to use for scraping. For example `http` or `https`. Default is http.                                               | `""`                 |
+| `gitea.metrics.serviceMonitor.scrapeTimeout` | Timeout after which the scrape is ended. If not specified, global Prometheus scrape timeout is used.                           | `""`                 |
+| `gitea.metrics.serviceMonitor.tlsConfig`     | TLS configuration to use when scraping the metric endpoint by Prometheus.                                                      | `{}`                 |
+| `gitea.ldap`                                 | LDAP configuration                                                                                                             | `[]`                 |
+| `gitea.oauth`                                | OAuth configuration                                                                                                            | `[]`                 |
+| `gitea.config.server.SSH_PORT`               | SSH port for rootlful Gitea image                                                                                              | `22`                 |
+| `gitea.config.server.SSH_LISTEN_PORT`        | SSH port for rootless Gitea image                                                                                              | `2222`               |
+| `gitea.additionalConfigSources`              | Additional configuration from secret or configmap                                                                              | `[]`                 |
+| `gitea.additionalConfigFromEnvs`             | Additional configuration sources from environment variables                                                                    | `[]`                 |
+| `gitea.podAnnotations`                       | Annotations for the Gitea pod                                                                                                  | `{}`                 |
+| `gitea.ssh.logLevel`                         | Configure OpenSSH's log level. Only available for root-based Gitea image.                                                      | `INFO`               |
 
 ### LivenessProbe
 
@@ -1039,12 +1123,25 @@ To comply with the Gitea helm chart definition of the digest parameter, a "custo
 
 ### redis-cluster
 
+Redis cluster and [Redis](#redis) cannot be enabled at the same time.
+
 | Name                             | Description                                  | Value   |
 | -------------------------------- | -------------------------------------------- | ------- |
-| `redis-cluster.enabled`          | Enable redis                                 | `true`  |
+| `redis-cluster.enabled`          | Enable redis cluster                         | `true`  |
 | `redis-cluster.usePassword`      | Whether to use password authentication       | `false` |
 | `redis-cluster.cluster.nodes`    | Number of redis cluster master nodes         | `3`     |
 | `redis-cluster.cluster.replicas` | Number of redis cluster master node replicas | `0`     |
+
+### redis
+
+Redis and [Redis cluster](#redis-cluster) cannot be enabled at the same time.
+
+| Name                          | Description                                | Value        |
+| ----------------------------- | ------------------------------------------ | ------------ |
+| `redis.enabled`               | Enable redis standalone or replicated      | `false`      |
+| `redis.architecture`          | Whether to use standalone or replication   | `standalone` |
+| `redis.global.redis.password` | Required password                          | `changeme`   |
+| `redis.master.count`          | Number of Redis master instances to deploy | `1`          |
 
 ### PostgreSQL HA
 
@@ -1059,7 +1156,7 @@ To comply with the Gitea helm chart definition of the digest parameter, a "custo
 | `postgresql-ha.postgresql.postgresPassword` | postgres Password                                                | `changeme1` |
 | `postgresql-ha.pgpool.adminPassword`        | pgpool adminPassword                                             | `changeme3` |
 | `postgresql-ha.service.ports.postgresql`    | PostgreSQL service port (overrides `service.ports.postgresql`)   | `5432`      |
-| `postgresql-ha.primary.persistence.size`    | PVC Storage Request for PostgreSQL HA volume                     | `10Gi`      |
+| `postgresql-ha.persistence.size`            | PVC Storage Request for PostgreSQL HA volume                     | `10Gi`      |
 
 ### PostgreSQL
 
