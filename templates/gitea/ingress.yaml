@@ -13,6 +13,7 @@ apiVersion: {{ $apiVersion }}
 kind: Ingress
 metadata:
   name: {{ $fullName }}
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
   labels:
     {{- include "gitea.labels" . | nindent 4 }}
   annotations:
@@ -21,7 +22,7 @@ metadata:
     {{- end }}
 spec:
 {{- if .Values.ingress.className }}
-  ingressClassName: {{ .Values.ingress.className }}
+  ingressClassName: {{ tpl .Values.ingress.className . }}
 {{- end }}
 {{- if .Values.ingress.tls }}
   tls:
