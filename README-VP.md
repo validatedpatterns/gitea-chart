@@ -24,3 +24,25 @@ See:
 
 By doing this we do not need to patch values files in subcharts and
 dependencies of subcharts
+
+## Update this chart
+
+1. Rebase from the upstream repo at https://gitea.com/gitea/helm-chart and fix any conflicts
+2. Update the version in Chart.yaml
+3. Build a test helm package via `helm package .` (this will create a "gitea-0.0.x.tgz" file)
+4. Create index.yaml with your custom url via `helm repo index --url https://foo.org/files/helm-repo .`
+5. Copy index.yaml, subcharts and helm package to your web server `scp -rp index.yaml charts gitea-0.0.3.tgz foo:/srv/foo.org/files/helm-repo`
+6. Deploy a pattern by setting the needed vars in `values-global.yaml`:
+   ```
+   main:
+     clusterGroupName: datacenter
+     multiSourceConfig:
+       enabled: true
+       clusterGroupChartVersion: 0.9.*
+     git:
+       repoUpstreamURL: https://github.com/mbaldessari/industrial-edge
+     gitea:
+       chartVersion: 0.0.3
+       chartName: gitea
+       helmRepoUrl: https://foo.org/files/helm-repo
+   ```

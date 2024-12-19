@@ -4,3 +4,5 @@
 node_modules/
 .DS_Store
 unittests/*/__snapshot__/
+/gitea-*.tgz
+/index.yaml
